@@ -3,6 +3,7 @@ import SaltaImg from "../assets/salta.jpg";
 import { Modal, Carousel, Button } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Link } from "react-router-dom";
+import Footer from "../components/Footer.jsx";
 
 export default function LandingPage() {
   const [show, setShow] = useState(false);
@@ -104,7 +105,9 @@ export default function LandingPage() {
         }}
       >
         <div className="container p-5 rounded">
-          <h1 className="display-3 fw-bold text-shadow">Hotel Refugio</h1>
+          <h1 style={{ fontWeight: 700, fontSize: "3rem", textShadow: "2px 2px 6px rgba(0,0,0,0.7)" }}>
+          <span style={{ color: "#ff7f32" }}>Hotel Refugio</span>
+          </h1>
           <p className="lead fs-4">Tu lugar ideal para descansar, disfrutar y crear recuerdos inolvidables.</p>
           <Button  className="btn-lg mt-3"  style={{ backgroundColor: "#ff7f32", border: "none" }}  onClick={() => {    const element = document.getElementById("busqueda");    if (element) element.scrollIntoView({ behavior: "smooth" });  }}>
             Reservar Ahora
@@ -271,17 +274,7 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="text-white text-center py-4" style={{ backgroundColor: "#222" }}>
-        <div className="container">
-          <p className="mb-2">&copy; 2025 Hotel Refugio. Todos los derechos reservados.</p>
-          <p className="mb-0">
-            Síguenos en: 
-            <a href="#" className="text-white mx-2">Facebook</a> | 
-            <a href="#" className="text-white mx-2">Instagram</a> | 
-            <a href="#" className="text-white mx-2">Twitter</a>
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

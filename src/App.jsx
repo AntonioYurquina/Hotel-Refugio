@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 
+import myLogo from '/vite.svg'; //logo en svg
+
 import LandingPage from "./pages/LandingPage.jsx";
 import Nosotros from "./pages/Nosotros.jsx";
 import Servicios from "./pages/Servicios.jsx";
@@ -34,10 +36,16 @@ function App() {
       {/* Navbar */}
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
         <div className="container">
-          <Link className="navbar-brand" to="/">Hotel Refugio</Link>
+          {/* Logo + Nombre */}
+          <Link className="navbar-brand d-flex align-items-center" to="/">
+            <img src={myLogo} alt="Hotel Refugio" style={{ height: "40px", marginRight: "10px" }} />
+            Hotel Refugio
+          </Link>
+
           <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span className="navbar-toggler-icon"></span>
           </button>
+
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto">
               <li className="nav-item"><Link className="nav-link" to="/nosotros">Nosotros</Link></li>
@@ -84,6 +92,7 @@ function App() {
           </div>
         </div>
       </nav>
+
 
       {/* Rutas */}
       <Routes>
