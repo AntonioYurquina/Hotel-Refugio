@@ -20,8 +20,11 @@ export function useHabitacionesActualizadas() {
 
         // Comparar y actualizar solo lo que cambió
         const actualizado = data.map((hab) => {
-          const existente = habitacionesRef.current.find((h) => h.id_habitacion === hab.id_habitacion);
+          const existente = habitacionesRef.current.find(
+            (h) => h.id_habitacion === hab.id_habitacion
+          );
           if (!existente) return hab;
+
           const igual =
             existente.numero === hab.numero &&
             existente.tipo === hab.tipo &&
@@ -29,6 +32,7 @@ export function useHabitacionesActualizadas() {
             existente.precio_noche === hab.precio_noche &&
             existente.estado === hab.estado &&
             existente.descripcion === hab.descripcion;
+
           return igual ? existente : hab;
         });
 
@@ -40,6 +44,10 @@ export function useHabitacionesActualizadas() {
         if (huboCambios && mounted) {
           habitacionesRef.current = actualizado;
           setHabitaciones(actualizado);
+
+          // 🚀 Exponer a la consola para desarrollo
+          window.habitaciones = actualizado;
+          console.log('Habitaciones actualizadas:', actualizado);
         }
       } catch (err) {
         console.error('Error al obtener habitaciones:', err);
