@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState("");
@@ -17,7 +17,7 @@ export default function Login({ setUser }) {
       const response = await fetch("https://robledo.website/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), "contraseña": password }),
+        body: JSON.stringify({ email: email.trim(), contraseña: password }),
       });
 
       const data = await response.json();
@@ -25,13 +25,12 @@ export default function Login({ setUser }) {
       if (data.tipo_usuario) {
         const userObj = {
           nombre: `${data.nombre} ${data.apellido}`,
-          rol: data.tipo_usuario === "cliente" ? "usuario" : "admin", // operador => admin
+          rol: data.tipo_usuario === "cliente" ? "usuario" : "admin",
         };
 
         setUser(userObj);
         localStorage.setItem("user", JSON.stringify(userObj));
 
-        // Redirigir según rol
         if (userObj.rol === "admin") navigate("/admin");
         else navigate("/usuario");
       } else if (data.error) {
@@ -88,7 +87,7 @@ export default function Login({ setUser }) {
       </form>
 
       <p className="text-center mt-3">
-        ¿No tienes cuenta? <a href="/registrarse">Registrarse</a>
+        ¿No tienes cuenta? <Link to="/registrarse">Registrarse</Link>
       </p>
     </div>
   );

@@ -1,6 +1,8 @@
+// src/App.jsx
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 
+import LandingPage from "./pages/LandingPage.jsx";
 import Nosotros from "./pages/Nosotros.jsx";
 import Servicios from "./pages/Servicios.jsx";
 import Contacto from "./pages/Contacto.jsx";
@@ -15,11 +17,13 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 function App() {
   const [user, setUser] = useState(null);
 
+  // Cargar usuario desde localStorage al iniciar
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
 
+  // Guardar usuario en localStorage al cambiar
   useEffect(() => {
     if (user) localStorage.setItem("user", JSON.stringify(user));
     else localStorage.removeItem("user");
@@ -83,6 +87,7 @@ function App() {
 
       {/* Rutas */}
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/nosotros" element={<Nosotros />} />
         <Route path="/servicios" element={<Servicios />} />
         <Route path="/contacto" element={<Contacto />} />
