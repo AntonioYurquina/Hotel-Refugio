@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Footer from "../components/Footer.jsx";
 
 export default function Registrarse() {
   const [nombre, setNombre] = useState("");
@@ -10,66 +11,116 @@ export default function Registrarse() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Validación básica (puedes expandirla)
     if (!nombre || !email || !password) {
       alert("Por favor completa todos los campos");
       return;
     }
 
-    // Aquí iría la lógica real de registro (API)
     alert(`Registrado:\nNombre: ${nombre}\nEmail: ${email}`);
-
-    // Redirigir al login después de registrarse
     navigate("/login");
   };
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "400px" }}>
-      <h2 className="text-center mb-4">Registrarse</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label htmlFor="nombre" className="form-label">Nombre completo</label>
-          <input
-            type="text"
-            className="form-control"
-            id="nombre"
-            placeholder="Tu nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label htmlFor="email" className="form-label">Correo electrónico</label>
-          <input
-            type="email"
-            className="form-control"
-            id="email"
-            placeholder="nombre@ejemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label htmlFor="password" className="form-label">Contraseña</label>
-          <input
-            type="password"
-            className="form-control"
-            id="password"
-            placeholder="********"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" className="btn btn-success w-100">Registrarse</button>
-      </form>
+    <>
+      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+        <div
+          className="card shadow-lg p-4"
+          style={{
+            width: "100%",
+            maxWidth: "420px",
+            borderRadius: "15px",
+            background: "white",
+          }}
+        >
+          <h2
+            className="text-center mb-4"
+            style={{ color: "#000000ff", fontWeight: 700 }}
+          >
+            Registrarse
+          </h2>
 
-      <p className="text-center mt-3">
-        ¿Ya tenés cuenta? <Link to="/login">Iniciar sesión</Link>
-      </p>
-    </div>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="nombre" className="form-label fw-semibold">
+                Nombre completo
+              </label>
+              <input
+                type="text"
+                className="form-control form-control-lg"
+                id="nombre"
+                placeholder="Tu nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+                style={{ borderRadius: "10px" }}
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label fw-semibold">
+                Correo electrónico
+              </label>
+              <input
+                type="email"
+                className="form-control form-control-lg"
+                id="email"
+                placeholder="nombre@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={{ borderRadius: "10px" }}
+              />
+            </div>
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label fw-semibold">
+                Contraseña
+              </label>
+              <input
+                type="password"
+                className="form-control form-control-lg"
+                id="password"
+                placeholder="********"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={{ borderRadius: "10px" }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn w-100"
+              style={{
+                backgroundColor: "#ff7f32",
+                color: "white",
+                fontWeight: 600,
+                borderRadius: "10px",
+                padding: "12px",
+                fontSize: "1rem",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+            >
+              Registrarse
+            </button>
+          </form>
+
+          <p className="text-center mt-3 mb-0" style={{ fontSize: "0.95rem" }}>
+            ¿Ya tenés cuenta?{" "}
+            <Link
+              to="/login"
+              style={{
+                color: "#ff7f32",
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              Iniciar sesión
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <Footer />
+    </>
   );
 }
-

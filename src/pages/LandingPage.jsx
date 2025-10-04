@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import SaltaImg from "../assets/salta.jpg"; 
-import { Modal, Carousel, Button } from "react-bootstrap";
+import { Modal, Carousel, Button } from "react-bootstrap"; // Solo 1 import de Button
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Combinar imports de react-router-dom
 import Footer from "../components/Footer.jsx";
 
 export default function LandingPage() {
+  const navigate = useNavigate();
+
   const [show, setShow] = useState(false);
   const [habitacionSeleccionada, setHabitacionSeleccionada] = useState(null);
   const [checkIn, setCheckIn] = useState(null);
@@ -13,7 +15,7 @@ export default function LandingPage() {
   const [personas, setPersonas] = useState(1);
   const [habitacionesFiltradas, setHabitacionesFiltradas] = useState([]);
 
-  // Función para calcular noches y validar fechas
+  // Funciones auxiliares
   const calcularNoches = (inicio, fin) => {
     if (!inicio || !fin) return 0;
     const diff = fin.getTime() - inicio.getTime();
@@ -26,31 +28,7 @@ export default function LandingPage() {
     return fin > inicio;
   };
 
-  // Función para buscar habitaciones disponibles
-  const buscarHabitaciones = () => {
-    if (!validarFechas(checkIn, checkOut)) {
-      alert("La fecha de check-out debe ser posterior a la de check-in.");
-      return;
-    }
-
-    const disponibles = habitaciones.filter(hab => {
-      if (hab.capacidad < personas) return false;
-      if (hab.estado !== "disponible") return false;
-      for (let res of reservas.filter(r => r.id_habitacion === hab.id)) {
-        const resInicio = new Date(res.fecha_inicio);
-        const resFin = new Date(res.fecha_fin);
-        if (checkIn < resFin && checkOut > resInicio) return false;
-      }
-      return true;
-    });
-
-    setHabitacionesFiltradas(disponibles);
-  };
-
-  const handleShow = (habitacion) => setHabitacionSeleccionada(habitacion) || setShow(true);
-  const handleClose = () => setShow(false);
-
-  // Diccionario de habitaciones
+  // Diccionarios de habitaciones y reservas
   const habitaciones = [
     {id:1,numero:101,tipo:"Single",capacidad:1,precio_noche:45.0,estado:"disponible",descripcion:"Habitación sencilla con cama individual y escritorio.",imagenes:["https://robledo.website/patas/3.jpg","https://robledo.website/patas/4.jpg"]},
     {id:2,numero:102,tipo:"Doble",capacidad:2,precio_noche:75.0,estado:"disponible",descripcion:"Perfecta para parejas, equipada con cama matrimonial y balcón.",imagenes:["https://robledo.website/patas/3.jpg","https://robledo.website/patas/4.jpg"]},
@@ -87,6 +65,37 @@ export default function LandingPage() {
     {id_reserva:14,id_habitacion:202,fecha_inicio:"2025-10-03",fecha_fin:"2025-10-06",estado:"finalizada"},
     {id_reserva:15,id_habitacion:203,fecha_inicio:"2025-10-09",fecha_fin:"2025-10-13",estado:"confirmada"}
   ];
+
+  const buscarHabitaciones = () => {
+    if (!validarFechas(checkIn, checkOut)) {
+      alert("La fecha de check-out debe ser posterior a la de check-in.");
+      return;
+    }
+
+    const disponibles = habitaciones.filter(hab => {
+      if (hab.capacidad < personas) return false;
+      if (hab.estado !== "disponible") return false;
+      for (let res of reservas.filter(r => r.id_habitacion === hab.id)) {
+        const resInicio = new Date(res.fecha_inicio);
+        const resFin = new Date(res.fecha_fin);
+        if (checkIn < resFin && checkOut > resInicio) return false;
+      }
+      return true;
+    });
+
+    setHabitacionesFiltradas(disponibles);
+  };
+
+  const handleShow = (habitacion) => {
+    setHabitacionSeleccionada(habitacion);
+    setShow(true);
+  };
+  const handleClose = () => setShow(false);
+
+  const handleReservar = () => {
+    // Redirige a la página de reserva o formulario
+    navigate("/login");
+  };
 
 
   return (
@@ -204,7 +213,12 @@ export default function LandingPage() {
             <Carousel interval={2500}>
               {habitacionSeleccionada.imagenes.map((img, idx) => (
                 <Carousel.Item key={idx}>
-                  <img src={img} alt={`${habitacionSeleccionada.tipo} ${idx}`} className="d-block w-100" style={{ height: "400px", objectFit: "cover", borderRadius: "10px" }} />
+                  <img
+                    src={img}
+                    alt={`${habitacionSeleccionada.tipo} ${idx}`}
+                    className="d-block w-100"
+                    style={{ height: "400px", objectFit: "cover", borderRadius: "10px" }}
+                  />
                 </Carousel.Item>
               ))}
             </Carousel>
@@ -248,7 +262,13 @@ export default function LandingPage() {
 
           <Modal.Footer>
             <Button variant="secondary" onClick={handleClose}>Cerrar</Button>
-            <Button style={{ backgroundColor: "#ff7f32", border: "none" }} disabled={!validarFechas(checkIn, checkOut)}>Reservar</Button>
+            <Button
+              style={{ backgroundColor: "#ff7f32", border: "none" }}
+              disabled={!validarFechas(checkIn, checkOut)}
+              onClick={handleReservar}
+            >
+              Reservar
+            </Button>
           </Modal.Footer>
         </Modal>
       )}

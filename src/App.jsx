@@ -53,18 +53,6 @@ function App() {
               <li className="nav-item"><Link className="nav-link" to="/contacto">Contacto</Link></li>
               <li className="nav-item"><Link className="nav-link" to="/login">Login</Link></li>
 
-              {!user && (
-                <li className="nav-item dropdown">
-                  <button className="btn btn-primary dropdown-toggle me-2" data-bs-toggle="dropdown">
-                    Modo
-                  </button>
-                  <ul className="dropdown-menu dropdown-menu-end">
-                    <li><Link className="dropdown-item" to="/usuario" onClick={() => setUser({nombre:"Usuario", rol:"usuario"})}>Usuario</Link></li>
-                    <li><Link className="dropdown-item" to="/admin" onClick={() => setUser({nombre:"Admin", rol:"admin"})}>Admin</Link></li>
-                  </ul>
-                </li>
-              )}
-
               {user && (
                 <li className="nav-item dropdown">
                   <button className="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">

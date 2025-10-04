@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import Footer from "../components/Footer.jsx";
 
 export default function Login({ setUser }) {
   const [email, setEmail] = useState("");
@@ -47,49 +48,103 @@ export default function Login({ setUser }) {
   };
 
   return (
-    <div className="container mt-5" style={{ maxWidth: "420px" }}>
-      <h2 className="text-center mb-4">Login</h2>
+    <>
+      {/* CONTENEDOR LOGIN */}
+      <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+        <div
+          className="card shadow-lg p-4"
+          style={{
+            width: "100%",
+            maxWidth: "420px",
+            borderRadius: "15px",
+            background: "white",
+          }}
+        >
+          <h2
+            className="text-center mb-4"
+            style={{ color: "#ff7f32", fontWeight: 700 }}
+          >
+            Iniciar Sesión
+          </h2>
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-3">
-          <label htmlFor="email" className="form-label">Correo electrónico</label>
-          <input
-            id="email"
-            type="email"
-            className="form-control"
-            placeholder="nombre@ejemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="username"
-          />
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label fw-semibold">
+                Correo electrónico
+              </label>
+              <input
+                id="email"
+                type="email"
+                className="form-control form-control-lg"
+                placeholder="nombre@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="username"
+                style={{ borderRadius: "10px" }}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label fw-semibold">
+                Contraseña
+              </label>
+              <input
+                id="password"
+                type="password"
+                className="form-control form-control-lg"
+                placeholder="********"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                style={{ borderRadius: "10px" }}
+              />
+            </div>
+
+            {error && (
+              <div className="alert alert-danger text-center">{error}</div>
+            )}
+
+            <button
+              className="btn w-100"
+              type="submit"
+              disabled={loading}
+              style={{
+                backgroundColor: "#ff7f32",
+                color: "white",
+                fontWeight: 600,
+                borderRadius: "10px",
+                padding: "12px",
+                fontSize: "1rem",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              }}
+            >
+              {loading ? "Ingresando..." : "Login"}
+            </button>
+          </form>
+
+          <p
+            className="text-center mt-3 mb-0"
+            style={{ fontSize: "0.95rem" }}
+          >
+            ¿No tienes cuenta?{" "}
+            <Link
+              to="/registrarse"
+              style={{
+                color: "#ff7f32",
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              Registrarse
+            </Link>
+          </p>
         </div>
+      </div>
 
-        <div className="mb-3">
-          <label htmlFor="password" className="form-label">Contraseña</label>
-          <input
-            id="password"
-            type="password"
-            className="form-control"
-            placeholder="********"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-        </div>
-
-        {error && <div className="alert alert-danger">{error}</div>}
-
-        <button className="btn btn-primary w-100" type="submit" disabled={loading}>
-          {loading ? "Ingresando..." : "Login"}
-        </button>
-      </form>
-
-      <p className="text-center mt-3">
-        ¿No tienes cuenta? <Link to="/registrarse">Registrarse</Link>
-      </p>
-    </div>
+      {/* FOOTER SIEMPRE ABAJO */}
+      <Footer />
+    </>
   );
 }
-

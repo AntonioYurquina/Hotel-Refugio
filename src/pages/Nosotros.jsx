@@ -3,6 +3,7 @@ import Footer from "../components/Footer.jsx";
 import { Carousel, Card, Row, Col } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Link } from "react-router-dom";
+import SaltaImg from "../assets/salta.jpg"; 
 
 export default function QuienesSomos() {
   const imagenesCarrusel = [
@@ -49,10 +50,10 @@ export default function QuienesSomos() {
       <section
         className="text-white text-center d-flex align-items-center"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.2)), url(${imagenesCarrusel[0]})`,
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.2)), url(${SaltaImg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          minHeight: "80vh",
+          minHeight: "70vh",
         }}
       >
         <div className="container p-5">
@@ -63,7 +64,7 @@ export default function QuienesSomos() {
             Tu refugio ideal en el corazón de la ciudad. Descansá, disfrutá y viví experiencias inolvidables en cada estancia.
           </p>
           <Link
-            to="/contacto"
+            to="/"
             className="btn btn-lg mt-3"
             style={{
               backgroundColor: "#ff7f32",
@@ -126,16 +127,23 @@ export default function QuienesSomos() {
         </Row>
       </section>
 
-      {/* BLOQUE VISUAL / IMÁGENES LATERALES */}
+      {/* BLOQUE VISUAL / MAPA LATERAL */}
       <section className="container mb-5">
         <Row className="align-items-center g-4">
           <Col md={6}>
-            <img 
-              src="https://robledo.website/patas/4.jpg" 
-              alt="Habitación elegante" 
-              className="img-fluid rounded shadow hover-zoom"
-            />
+            <div className="rounded shadow overflow-hidden" style={{ height: "400px" }}>
+              <iframe
+                title="Ubicación Hotel Alejandro I"
+                src="https://www.google.com/maps?q=Hotel+Alejandro+I+Salta&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen=""
+                loading="lazy"
+              ></iframe>
+            </div>
           </Col>
+
           <Col md={6}>
             <h3 style={{ color: "#ff7f32", fontWeight: 700 }}>Experiencias únicas en cada estancia</h3>
             <p style={{ color: "#555", lineHeight: 1.7, marginTop: "15px" }}>
@@ -148,7 +156,7 @@ export default function QuienesSomos() {
               <li>Actividades recreativas para toda la familia</li>
             </ul>
             <Link
-              to="/contacto"
+              to="/"
               className="btn btn-lg mt-3"
               style={{
                 backgroundColor: "#ff7f32",
@@ -165,9 +173,10 @@ export default function QuienesSomos() {
         </Row>
       </section>
 
+
       {/* CARRUSEL DE TESTIMONIOS MULTI-ITEM */}
       <section className="container mb-5">
-        <h2 className="text-center mb-4" style={{ color: "#ff7f32", fontWeight: 700 }}>Qué dicen nuestros huéspedes</h2>
+        <h2 className="text-center mb-4" style={{ color: "#ff7f32", fontWeight: 700 }}>Lo dicen nuestros huéspedes</h2>
         <Carousel fade interval={2500} pause={false} indicators={false}>
           {gruposTestimonios.map((grupo, idx) => (
             <Carousel.Item key={idx}>
@@ -199,7 +208,7 @@ export default function QuienesSomos() {
           Reservá hoy y disfrutá de la mejor experiencia de hospedaje en la ciudad.
         </p>
         <Link
-          to="/contacto"
+          to="/"
           className="btn btn-lg mt-3"
           style={{
             backgroundColor: "#ff7f32",
