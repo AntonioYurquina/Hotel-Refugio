@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
 
-import myLogo from '/vite.svg'; //logo en svg
+import myLogo from '/vite.svg'; // Logo SVG
 
 import LandingPage from "./pages/LandingPage.jsx";
 import Nosotros from "./pages/Nosotros.jsx";
@@ -12,6 +12,7 @@ import Login from "./pages/Login.jsx";
 import Registrarse from "./pages/Registrarse.jsx";
 import UsuarioPage from "./pages/Usuario.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
+import Dialogo from "./components/Dialogo.jsx";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -47,32 +48,42 @@ function App() {
           </button>
 
           <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav ms-auto">
+            <ul className="navbar-nav ms-auto align-items-center">
               <li className="nav-item"><Link className="nav-link" to="/nosotros">Nosotros</Link></li>
               <li className="nav-item"><Link className="nav-link" to="/servicios">Servicios</Link></li>
               <li className="nav-item"><Link className="nav-link" to="/contacto">Contacto</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/login">Login</Link></li>
+
+              {!user && (
+                <li className="nav-item">
+                  <Link className="nav-link" to="/login">Login</Link>
+                </li>
+              )}
 
               {user && (
                 <li className="nav-item dropdown">
-                  <button className="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                  <button 
+                    className="btn btn-secondary dropdown-toggle" 
+                    data-bs-toggle="dropdown"
+                  >
                     {user.nombre} ({user.rol})
                   </button>
                   <ul className="dropdown-menu dropdown-menu-end">
                     {user.rol === "usuario" && (
                       <>
                         <li><Link className="dropdown-item" to="/usuario">Perfil</Link></li>
-                        <li><Link className="dropdown-item" to="/usuario/config">Configuración</Link></li>
                       </>
                     )}
                     {user.rol === "admin" && (
                       <>
                         <li><Link className="dropdown-item" to="/admin">Dashboard</Link></li>
-                        <li><Link className="dropdown-item" to="/admin/config">Configuración Admin</Link></li>
                       </>
                     )}
                     <li><hr className="dropdown-divider" /></li>
-                    <li><button className="dropdown-item" onClick={() => setUser(null)}>Logout</button></li>
+                    <li>
+                      <button className="dropdown-item" onClick={() => setUser(null)}>
+                        Logout
+                      </button>
+                    </li>
                   </ul>
                 </li>
               )}
@@ -80,7 +91,6 @@ function App() {
           </div>
         </div>
       </nav>
-
 
       {/* Rutas */}
       <Routes>
@@ -92,12 +102,20 @@ function App() {
         <Route path="/registrarse" element={<Registrarse />} />
 
         {/* Rutas protegidas */}
-        <Route path="/usuario/*" element={user?.rol === "usuario" ? <UsuarioPage user={user} /> : <Navigate to="/login" />} />
-        <Route path="/admin/*" element={user?.rol === "admin" ? <AdminPage user={user} /> : <Navigate to="/login" />} />
+        <Route 
+          path="/usuario/*" 
+          element={user?.rol === "usuario" ? <UsuarioPage user={user} /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/admin/*" 
+          element={user?.rol === "admin" ? <AdminPage user={user} /> : <Navigate to="/login" />} 
+        />
       </Routes>
+
+      {/* Componente de diálogo */}
+      <Dialogo user={user} />
     </BrowserRouter>
   );
 }
 
 export default App;
-

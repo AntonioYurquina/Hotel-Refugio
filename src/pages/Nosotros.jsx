@@ -200,6 +200,37 @@ export default function QuienesSomos() {
           ))}
         </Carousel>
       </section>
+      
+      {/* HORARIO DE ATENCIÓN CON IMAGEN */}
+      <section className="container mb-5">
+        <Row className="align-items-center g-4">
+          {/* Columna Horario */}
+          <Col md={6}>
+            <h2 className="text-center mb-4" style={{ color: "#ff7f32", fontWeight: 700 }}>Horario de Atención</h2>
+            <Card className="shadow-sm p-3 text-center" style={{ borderRadius: "15px" }}>
+              <Card.Body>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, color: "#555", fontSize: "1rem", lineHeight: 1.7 }}>
+                  <li>Lunes a Viernes: 08:00 - 22:00</li>
+                  <li>Sábados: 09:00 - 20:00</li>
+                  <li>Domingos y feriados: 10:00 - 18:00</li>
+                </ul>
+              </Card.Body>
+            </Card>
+          </Col>
+
+          {/* Columna Imagen */}
+          <Col md={6}>
+            <div className="rounded shadow overflow-hidden" style={{ height: "300px" }}>
+              <img
+                src="https://robledo.website/patas/1.jpg" // reemplaza con la URL de tu imagen
+                alt="Horario de atención"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            </div>
+          </Col>
+        </Row>
+      </section>
+
 
       {/* CTA FINAL / INVITACIÓN A RESERVAR */}
       <section className="container text-center mb-5">
