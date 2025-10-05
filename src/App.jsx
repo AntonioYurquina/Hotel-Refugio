@@ -12,7 +12,6 @@ import Login from "./pages/Login.jsx";
 import Registrarse from "./pages/Registrarse.jsx";
 import UsuarioPage from "./pages/Usuario.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
-import Dialogo from "./components/Dialogo.jsx";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -112,8 +111,6 @@ function App() {
         />
       </Routes>
 
-      {/* Componente de diálogo */}
-      <Dialogo user={user} />
     </BrowserRouter>
   );
 }
