@@ -1,76 +1,81 @@
-import React, { useEffect, useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Operator from './pages/Operator';
 import Admin from './pages/Admin';
-import { initialOperators } from './data/operators';
+import Login from './pages/Login';
+import UserDashboard from './pages/UserDashboard'; // Importar el nuevo componente
+import { useUsuarioLogic } from './hooks/useUsuarioLogic';
 
-// Función para adaptar los datos de la API
-const adaptRoomData = (apiRoom) => ({
-  id: apiRoom.id_habitacion,
-  name: `Habitación ${apiRoom.numero} (${apiRoom.tipo})`,
-  price: parseFloat(apiRoom.precio_noche),
-  capacity: parseInt(apiRoom.capacidad, 10),
-  description: apiRoom.descripcion,
-  open: apiRoom.estado !== 'ocupada' && apiRoom.estado !== 'cerrada',
-  amenities: ['WiFi', 'TV', 'Servicio a la habitación'], // Datos de ejemplo
-  imgQuery: `${apiRoom.tipo},hotel-room`,
-});
+// Componente para proteger rutas
+function ProtectedRoute({ user, allowedRoles, children }) {
+  if (!user.ok || !allowedRoles.includes(user.datos.tipo_usuario)) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
 
 export default function App() {
-  const [rooms, setRooms] = useState([]);
-  const [reservations, setReservations] = useState([]);
-  const [operators, setOperators] = useState([]);
-  const [gpt5Enabled, setGpt5Enabled] = useState(false);
+  const {
+    usuario,
+    credenciales,
+    login,
+    logout,
+    actualizarCredenciales,
+    habitaciones,
+    cargarHabitaciones,
+    manejarActualizacion,
+    reservas,
+    descargarReservas,
+    allUsers,
+    descargarUsuarios
+  } = useUsuarioLogic();
 
   useEffect(() => {
-    // Cargar habitaciones desde la API
-    fetch('https://robledo.website/habitaciones')
-      .then(response => response.json())
-      .then(data => {
-        if (data.ok && Array.isArray(data.datos)) {
-          const adaptedRooms = data.datos.map(adaptRoomData);
-          setRooms(adaptedRooms);
-        }
-      })
-      .catch(error => console.error("Error fetching rooms:", error));
-
-    // Cargar otras cosas desde localStorage
-    const res = localStorage.getItem('hr_reservations');
-    setReservations(res ? JSON.parse(res) : []);
-
-    const ops = localStorage.getItem('hr_operators');
-    setOperators(ops ? JSON.parse(ops) : initialOperators);
-
-    const gpt = localStorage.getItem('hr_gpt5_enabled');
-    setGpt5Enabled(gpt ? JSON.parse(gpt) : false);
-  }, []);
-
-  const addReservation = (reservation) => {
-    const updated = [reservation, ...reservations];
-    setReservations(updated);
-    localStorage.setItem('hr_reservations', JSON.stringify(updated));
-  };
+    cargarHabitaciones();
+    descargarReservas();
+    descargarUsuarios();
+  }, []); // Se ejecuta solo una vez al montar el componente
 
   return (
-    <Layout gpt5Enabled={gpt5Enabled}>
+    <Layout user={usuario} logout={logout}>
       <Routes>
         <Route path="/" element={
-          <Home rooms={rooms} addReservation={addReservation} />
+          <Home habitaciones={habitaciones.datos} />
+        } />
+        <Route path="/login" element={
+          <Login 
+            credenciales={credenciales} 
+            actualizarCredenciales={actualizarCredenciales} 
+            handleLogin={login} 
+          />
+        } />
+        <Route path="/dashboard" element={
+          <ProtectedRoute user={usuario} allowedRoles={['cliente', 'operador', 'administrador']}>
+            <UserDashboard user={usuario} allReservations={reservas.datos} />
+          </ProtectedRoute>
         } />
         <Route path="/operator" element={
-          <Operator 
-            rooms={rooms} setRooms={setRooms} 
-            reservations={reservations} setReservations={setReservations} 
-            gpt5Enabled={gpt5Enabled} setGpt5Enabled={setGpt5Enabled} 
-          />
+          <ProtectedRoute user={usuario} allowedRoles={['operador', 'administrador']}>
+            <Operator 
+              user={usuario} // <-- Añadir usuario
+              habitaciones={habitaciones} 
+              manejarActualizacion={manejarActualizacion}
+              reservas={reservas.datos}
+            />
+          </ProtectedRoute>
         } />
         <Route path="/admin" element={
-          <Admin 
-            rooms={rooms} setRooms={setRooms}
-            operators={operators} setOperators={setOperators}
-          />
+          <ProtectedRoute user={usuario} allowedRoles={['administrador']}>
+            <Admin 
+              user={usuario} // <-- Añadir usuario
+              habitaciones={habitaciones}
+              manejarActualizacion={manejarActualizacion}
+              reservas={reservas.datos}
+              users={allUsers.datos}
+            />
+          </ProtectedRoute>
         } />
       </Routes>
     </Layout>

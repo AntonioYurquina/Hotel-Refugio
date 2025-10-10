@@ -34,3 +34,15 @@ Instrucciones para correr el proyecto.
 Notas:
 - Las reservas y estado de habitaciones se almacenan en localStorage (hr_reservations, hr_rooms).
 - Imagenes: Unsplash (source.unsplash.com). Formas reales de envío de mail y procesamiento de pagos deben integrarse con APIs/Backend.
+
+## Credenciales de Acceso
+
+Para acceder a los paneles de gestión, utiliza los botones en la barra de navegación e introduce la clave correspondiente:
+
+-   **Panel de Operador:**
+    -   **Botón:** `Operador`
+    -   **Contraseña:** `admin2025`
+
+-   **Panel de Administrador:**
+    -   **Botón:** `Admin`
+    -   **Contraseña:** `superadmin2026`

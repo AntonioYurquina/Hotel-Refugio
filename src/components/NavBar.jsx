@@ -1,20 +1,7 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 
-export default function NavBar({ gpt5Enabled }) {
-  const navigate = useNavigate();
-
-  const handleLogin = (role) => {
-    const password = prompt(`Ingrese clave de ${role}:`);
-    if (role === 'Operador' && password === 'admin2025') {
-      navigate('/operator');
-    } else if (role === 'Admin' && password === 'superadmin2026') {
-      navigate('/admin');
-    } else if (password) {
-      alert('Clave incorrecta.');
-    }
-  };
-
+export default function NavBar({ user, logout }) {
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
       <div className="container">
@@ -22,20 +9,21 @@ export default function NavBar({ gpt5Enabled }) {
           <i className="fa-solid fa-hotel me-2 text-primary"></i>Hotel Refugio
         </Link>
         <div className="d-flex align-items-center">
-          {gpt5Enabled && (
-            <span className="badge bg-info-subtle text-info-emphasis me-3" title="GPT-5 mini concierge is active for all clients">
-              <i className="fa-solid fa-robot me-1"></i> AI Concierge
-            </span>
+          {user.ok ? (
+            <div className="d-flex align-items-center">
+              <NavLink className="btn btn-outline-info me-2" to="/dashboard">Mi Panel</NavLink>
+              {user.datos.tipo_usuario === 'administrador' && (
+                <NavLink className="btn btn-outline-danger me-2" to="/admin">Admin</NavLink>
+              )}
+              {(user.datos.tipo_usuario === 'operador' || user.datos.tipo_usuario === 'administrador') && (
+                <NavLink className="btn btn-outline-primary me-2" to="/operator">Operador</NavLink>
+              )}
+              <span className="navbar-text me-3">Hola, {user.datos.nombre}</span>
+              <button className="btn btn-secondary" onClick={logout}>Salir</button>
+            </div>
+          ) : (
+            <Link className="btn btn-primary" to="/login">Acceder</Link>
           )}
-          <div className="btn-group me-2">
-            <button className="btn btn-outline-primary" onClick={() => handleLogin('Operador')}>
-              <i className="fa-solid fa-key"></i> Operador
-            </button>
-            <button className="btn btn-outline-danger" onClick={() => handleLogin('Admin')}>
-              <i className="fa-solid fa-user-shield"></i> Admin
-            </button>
-          </div>
-          <a className="btn btn-primary" href="#rooms">Reservar</a>
         </div>
       </div>
     </nav>
