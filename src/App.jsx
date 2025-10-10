@@ -1,118 +1,58 @@
-// src/App.jsx
-import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+import Operator from './pages/Operator';
+import Admin from './pages/Admin';
+import { initialRooms } from './data/rooms';
+import { initialOperators } from './data/operators';
 
-import myLogo from '/vite.svg'; // Logo SVG
+export default function App() {
+  const [rooms, setRooms] = useState([]);
+  const [reservations, setReservations] = useState([]);
+  const [operators, setOperators] = useState([]);
+  const [gpt5Enabled, setGpt5Enabled] = useState(false);
 
-import LandingPage from "./pages/LandingPage.jsx";
-import Nosotros from "./pages/Nosotros.jsx";
-import Servicios from "./pages/Servicios.jsx";
-import Contacto from "./pages/Contacto.jsx";
-import Login from "./pages/Login.jsx";
-import Registrarse from "./pages/Registrarse.jsx";
-import UsuarioPage from "./pages/Usuario.jsx";
-import AdminPage from "./pages/AdminPage.jsx";
-
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
-
-function App() {
-  const [user, setUser] = useState(null);
-
-  // Cargar usuario desde localStorage al iniciar
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    const r = localStorage.getItem('hr_rooms');
+    setRooms(r ? JSON.parse(r) : initialRooms);
+
+    const res = localStorage.getItem('hr_reservations');
+    setReservations(res ? JSON.parse(res) : []);
+
+    const ops = localStorage.getItem('hr_operators');
+    setOperators(ops ? JSON.parse(ops) : initialOperators);
+
+    const gpt = localStorage.getItem('hr_gpt5_enabled');
+    setGpt5Enabled(gpt ? JSON.parse(gpt) : false);
   }, []);
 
-  // Guardar usuario en localStorage al cambiar
-  useEffect(() => {
-    if (user) localStorage.setItem("user", JSON.stringify(user));
-    else localStorage.removeItem("user");
-  }, [user]);
+  const addReservation = (reservation) => {
+    const updated = [reservation, ...reservations];
+    setReservations(updated);
+    localStorage.setItem('hr_reservations', JSON.stringify(updated));
+  };
 
   return (
-    <BrowserRouter basename="/Hotel-Refugio">
-      {/* Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container">
-          {/* Logo + Nombre */}
-          <Link className="navbar-brand d-flex align-items-center" to="/">
-            <img src={myLogo} alt="Hotel Refugio" style={{ height: "40px", marginRight: "10px" }} />
-            Hotel Refugio
-          </Link>
-
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav ms-auto align-items-center">
-              <li className="nav-item"><Link className="nav-link" to="/nosotros">Nosotros</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/servicios">Servicios</Link></li>
-              <li className="nav-item"><Link className="nav-link" to="/contacto">Contacto</Link></li>
-
-              {!user && (
-                <li className="nav-item">
-                  <Link className="nav-link" to="/login">Login</Link>
-                </li>
-              )}
-
-              {user && (
-                <li className="nav-item dropdown">
-                  <button 
-                    className="btn btn-secondary dropdown-toggle" 
-                    data-bs-toggle="dropdown"
-                  >
-                    {user.nombre} ({user.rol})
-                  </button>
-                  <ul className="dropdown-menu dropdown-menu-end">
-                    {user.rol === "usuario" && (
-                      <>
-                        <li><Link className="dropdown-item" to="/usuario">Perfil</Link></li>
-                      </>
-                    )}
-                    {user.rol === "admin" && (
-                      <>
-                        <li><Link className="dropdown-item" to="/admin">Dashboard</Link></li>
-                      </>
-                    )}
-                    <li><hr className="dropdown-divider" /></li>
-                    <li>
-                      <button className="dropdown-item" onClick={() => setUser(null)}>
-                        Logout
-                      </button>
-                    </li>
-                  </ul>
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-      </nav>
-
-      {/* Rutas */}
+    <Layout gpt5Enabled={gpt5Enabled}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/nosotros" element={<Nosotros />} />
-        <Route path="/servicios" element={<Servicios />} />
-        <Route path="/contacto" element={<Contacto />} />
-        <Route path="/login" element={<Login setUser={setUser} />} />
-        <Route path="/registrarse" element={<Registrarse />} />
-
-        {/* Rutas protegidas */}
-        <Route 
-          path="/usuario/*" 
-          element={user?.rol === "usuario" ? <UsuarioPage user={user} /> : <Navigate to="/login" />} 
-        />
-        <Route 
-          path="/admin/*" 
-          element={user?.rol === "admin" ? <AdminPage user={user} /> : <Navigate to="/login" />} 
-        />
+        <Route path="/" element={
+          <Home rooms={rooms} addReservation={addReservation} />
+        } />
+        <Route path="/operator" element={
+          <Operator 
+            rooms={rooms} setRooms={setRooms} 
+            reservations={reservations} setReservations={setReservations} 
+            gpt5Enabled={gpt5Enabled} setGpt5Enabled={setGpt5Enabled} 
+          />
+        } />
+        <Route path="/admin" element={
+          <Admin 
+            rooms={rooms} setRooms={setRooms}
+            operators={operators} setOperators={setOperators}
+          />
+        } />
       </Routes>
-
-    </BrowserRouter>
+    </Layout>
   );
 }
-
-export default App;

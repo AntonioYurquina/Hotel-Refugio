@@ -1,0 +1,5 @@
+body { padding-top: 70px; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+.hero { background: linear-gradient(90deg, rgba(2,6,23,0.85), rgba(2,6,23,0.6)), url('https://source.unsplash.com/1600x900/?hotel,lobby'); background-size: cover; color: #fff; padding: 60px 20px; border-radius: .5rem; }
+.card-room img { height:160px; object-fit:cover; border-top-left-radius:.5rem; border-top-right-radius:.5rem; }
+.badge-status { font-weight:600; }
+.form-error { color:#b00020; font-size:0.9rem; }

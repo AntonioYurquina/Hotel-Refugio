@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TP Integrador - Sitio Web de Hotel — Especificación</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { padding-top: 3.5rem; }
+    .hero { background:#f8f9fa; padding:2rem 1rem; border-radius:.5rem; }
+    .api-card img { max-height:180px; object-fit:cover; width:100%; border-radius:.25rem; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="#">TP Integrador — Hotel</a>
+  </div>
+</nav>
+
+<main class="container">
+  <div class="hero mb-4">
+    <h1 class="h3">Trabajo Práctico Integrador — Desarrollo de un Sitio Web de Hotel</h1>
+    <p class="mb-0">Resumen de requisitos, funcionalidades y tecnologías sugeridas para el proyecto.</p>
+  </div>
+
+  <section class="mb-4">
+    <h2 class="h5">Requisitos generales</h2>
+    <ul>
+      <li>Asistencia: 80% a clases teóricas y prácticas.</li>
+      <li>Entrega individual o grupal (máx. 2 integrantes).</li>
+      <li>El sitio debe permitir uso en localhost y deploy en la nube (GitHub Pages u otro).</li>
+      <li>Aplicar buen diseño UX, validación de todos los campos e inclusión de al menos 2 APIs Web.</li>
+      <li>Base de datos: relacional (SQL) o documental (NoSQL).</li>
+      <li>Documentación básica de tecnologías usadas.</li>
+    </ul>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="h5">Funcionalidades obligatorias</h2>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title h6">Usuario</h3>
+            <ul>
+              <li>Ver habitaciones y servicios.</li>
+              <li>Realizar reserva (form con validación).</li>
+              <li>Consultas por mail (form o integración con API de email).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title h6">Operador</h3>
+            <ul>
+              <li>Consultar habitaciones (mapa/planilla).</li>
+              <li>Consultar y liberar reservas.</li>
+              <li>Abrir / cerrar habitación.</li>
+              <li>Procesar pago y responder mails.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title h6">Administrador</h3>
+            <ul>
+              <li>CRUD de habitaciones.</li>
+              <li>CRUD de operadores.</li>
+              <li>Consultas parametrizadas y gráficos (estadísticas).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="h5">Tecnologías y buenas prácticas sugeridas</h2>
+    <ul>
+      <li>Frontend: HTML5, CSS3 + framework (Bootstrap, Tailwind) y JS moderno (ES6+).</li>
+      <li>Backend: Node.js / Express, o PHP/Laravel, o Python/Flask según lo visto en clase.</li>
+      <li>BD: MySQL/Postgres o MongoDB.</li>
+      <li>APIs: mínimo 2 APIs Web externas (a modo de ejemplo se usan Unsplash y GitHub en esta página).</li>
+      <li>Validaciones: cliente y servidor; control de subida de imágenes y sanitización.</li>
+      <li>UX: navegación clara, formularios con feedback, accesibilidad básica.</li>
+    </ul>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="h5">Despliegue y documentación</h2>
+    <ul>
+      <li>Deploy recomendado: GitHub Pages (frontend), Heroku / Vercel / Render para backend o contenedor en la nube.</li>
+      <li>Incluir README con: tecnologías, estructura, comandos para levantar en localhost, endpoints y ejemplos de uso.</li>
+    </ul>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="h5">Cronograma</h2>
+    <p>Presentaciones desde 18 de octubre hasta 12 de noviembre inclusive. Planificar entregables e hitos.</p>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="h5">Recursos de inspiración</h2>
+    <ul>
+      <li><a href="https://www.behance.net/" target="_blank">Behance</a></li>
+      <li><a href="https://unsplash.com/" target="_blank">Unsplash</a></li>
+      <li><a href="https://www.awwwards.com/" target="_blank">Awwwards</a></li>
+      <li><a href="https://www.pinterest.com/" target="_blank">Pinterest</a></li>
+    </ul>
+  </section>
+
+  <section class="mb-4">
+    <h2 class="h5">Demostración mínima de uso de 2 APIs públicas</h2>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <div class="card api-card">
+          <img id="unsplash-img" alt="Imagen Unsplash" src="" />
+          <div class="card-body">
+            <h3 class="h6">Unsplash (imagen aleatoria)</h3>
+            <p class="mb-0">Se usa source.unsplash.com para obtener una foto sin clave.</p>
+            <button id="reload-img" class="btn btn-sm btn-outline-primary mt-2"><i class="fa-solid fa-arrows-rotate"></i> Nueva imagen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="h6">GitHub API (repo público)</h3>
+            <p id="github-info" class="mb-0">Cargando información del repo público...</p>
+            <small class="text-muted d-block mt-2">Ejemplo: GET a api.github.com/repos/octocat/Hello-World</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-muted mb-4">
+    <small>Documento guía para el TP integrador — preparar presentación y demo funcional en fecha.</small>
+  </footer>
+</main>
+
+<script>
+  // Unsplash demo: source.unsplash.com permite obtener imágenes sin clave
+  const imgEl = document.getElementById('unsplash-img');
+  const reloadBtn = document.getElementById('reload-img');
+  function loadUnsplash() {
+    const w = 800, h = 400;
+    imgEl.src = 'https://source.unsplash.com/random/' + w + 'x' + h + '?hotel,room';
+  }
+  reloadBtn.addEventListener('click', loadUnsplash);
+  loadUnsplash();
+
+  // GitHub API demo: datos públicos de un repo (no requiere clave para endpoints públicos con limitaciones)
+  const ghInfo = document.getElementById('github-info');
+  fetch('https://api.github.com/repos/octocat/Hello-World')
+    .then(r => r.json())
+    .then(data => {
+      ghInfo.innerHTML = `<strong>${data.full_name}</strong><br>⭐ ${data.stargazers_count} — Última actualización: ${new Date(data.updated_at).toLocaleString()}`;
+    })
+    .catch(err => { ghInfo.textContent = 'No se pudo obtener info del repo. ' + err.message; });
+</script>
+
+</body>
+</html>
