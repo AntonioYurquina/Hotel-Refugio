@@ -11,6 +11,17 @@ export default function RoomList({ rooms, addReservation }) {
     r.description.toLowerCase().includes(query.toLowerCase())
   );
 
+  if (rooms.length === 0) {
+    return (
+      <div className="text-center p-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="mt-2 text-muted">Cargando habitaciones...</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="mb-4 d-flex">

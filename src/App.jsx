@@ -4,8 +4,19 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Operator from './pages/Operator';
 import Admin from './pages/Admin';
-import { initialRooms } from './data/rooms';
 import { initialOperators } from './data/operators';
+
+// Función para adaptar los datos de la API
+const adaptRoomData = (apiRoom) => ({
+  id: apiRoom.id_habitacion,
+  name: `Habitación ${apiRoom.numero} (${apiRoom.tipo})`,
+  price: parseFloat(apiRoom.precio_noche),
+  capacity: parseInt(apiRoom.capacidad, 10),
+  description: apiRoom.descripcion,
+  open: apiRoom.estado !== 'ocupada' && apiRoom.estado !== 'cerrada',
+  amenities: ['WiFi', 'TV', 'Servicio a la habitación'], // Datos de ejemplo
+  imgQuery: `${apiRoom.tipo},hotel-room`,
+});
 
 export default function App() {
   const [rooms, setRooms] = useState([]);
@@ -14,9 +25,18 @@ export default function App() {
   const [gpt5Enabled, setGpt5Enabled] = useState(false);
 
   useEffect(() => {
-    const r = localStorage.getItem('hr_rooms');
-    setRooms(r ? JSON.parse(r) : initialRooms);
+    // Cargar habitaciones desde la API
+    fetch('https://robledo.website/habitaciones')
+      .then(response => response.json())
+      .then(data => {
+        if (data.ok && Array.isArray(data.datos)) {
+          const adaptedRooms = data.datos.map(adaptRoomData);
+          setRooms(adaptedRooms);
+        }
+      })
+      .catch(error => console.error("Error fetching rooms:", error));
 
+    // Cargar otras cosas desde localStorage
     const res = localStorage.getItem('hr_reservations');
     setReservations(res ? JSON.parse(res) : []);
 
