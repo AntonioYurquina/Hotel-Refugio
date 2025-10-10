@@ -10,20 +10,42 @@ export default function NavBar({ user, logout }) {
         </Link>
         <div className="d-flex align-items-center">
           {user.ok ? (
-            <div className="d-flex align-items-center">
-              <NavLink className="btn btn-outline-info me-2" to="/dashboard">Mi Panel</NavLink>
-              {user.datos.tipo_usuario === 'administrador' && (
-                <NavLink className="btn btn-outline-danger me-2" to="/admin">Admin</NavLink>
-              )}
-              {(user.datos.tipo_usuario === 'operador' || user.datos.tipo_usuario === 'administrador') && (
-                <NavLink className="btn btn-outline-primary me-2" to="/operator">Operador</NavLink>
-              )}
-              <span className="navbar-text me-3">Hola, {user.datos.nombre}</span>
-              <button className="btn btn-secondary" onClick={logout}>Salir</button>
+            <div className="nav-item dropdown">
+              <a 
+                className="nav-link dropdown-toggle" 
+                href="#" 
+                role="button" 
+                data-bs-toggle="dropdown" 
+                aria-expanded="false"
+              >
+                <i className="fa-solid fa-user-circle me-1"></i>
+                {user.datos.nombre}
+              </a>
+              <ul className="dropdown-menu dropdown-menu-end">
+                {user.datos.tipo_usuario === 'cliente' && (
+                  <li><NavLink className="dropdown-item" to="/dashboard">Mi Panel</NavLink></li>
+                )}
+                {user.datos.tipo_usuario === 'operador' && (
+                  <li><NavLink className="dropdown-item" to="/operator">Panel Operador</NavLink></li>
+                )}
+                {user.datos.tipo_usuario === 'admin' && (
+                  <>
+                    <li><NavLink className="dropdown-item" to="/admin">Panel Admin</NavLink></li>
+                    <li><NavLink className="dropdown-item" to="/operator">Panel Operador</NavLink></li>
+                  </>
+                )}
+                <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <button className="dropdown-item text-danger" onClick={logout}>
+                    <i className="fa-solid fa-right-from-bracket me-2"></i>Cerrar Sesión
+                  </button>
+                </li>
+              </ul>
             </div>
           ) : (
-            <Link className="btn btn-primary" to="/login">Acceder</Link>
+            <Link className="btn btn-outline-primary me-2" to="/login">Acceder</Link>
           )}
+          <Link to="/reserve" className="btn btn-primary">Reservar</Link>
         </div>
       </div>
     </nav>

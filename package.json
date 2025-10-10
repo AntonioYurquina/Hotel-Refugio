@@ -8,17 +8,22 @@
     "build": "vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "npx gh-pages -d dist"
   },
   "dependencies": {
-    "bootstrap": "^5.3.8",
+    "bootstrap": "^5.3.2",
+    "chart.js": "^4.5.0",
+    "date-fns": "^4.1.0",
+    "emailjs-com": "^3.2.0",
     "react": "^18.2.0",
+    "react-big-calendar": "^1.19.4",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.1"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
     "@vitejs/plugin-react": "^4.0.0",
-    "gh-pages": "^6.1.1"
+    "gh-pages": "^6.1.1",
+    "vite": "^5.0.0"
   }
 }

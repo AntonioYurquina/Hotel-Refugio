@@ -1,7 +1,9 @@
 import React from 'react';
 
 export default function RoomCard({ room, onSelect }) {
-  const img = `https://source.unsplash.com/800x600/?${encodeURIComponent(room.imgQuery)}&${room.id}`;
+  // Usamos la primera imagen del array de imágenes
+  const img = room.images && room.images.length > 0 ? room.images[0] : 'https://via.placeholder.com/800x600?text=Sin+Imagen';
+  
   return (
     <div className="card h-100 shadow-sm card-room">
       <img src={img} alt={room.name} className="card-img-top" />

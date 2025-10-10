@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Dashboard from './Operator/Dashboard';
-import Reservations from './Operator/Reservations';
 import Rooms from './Operator/Rooms';
+import OperatorCalendar from './Operator/Calendar'; // Importar Calendario
 
-export default function Operator({ user, habitaciones, manejarActualizacion, reservas }) {
+export default function Operator({ user, habitaciones, manejarActualizacion, reservas, crearReserva }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -37,21 +37,21 @@ export default function Operator({ user, habitaciones, manejarActualizacion, res
           </button>
         </li>
         <li className="nav-item">
-          <button className={`nav-link ${activeTab === 'reservations' ? 'active' : ''}`} onClick={() => setActiveTab('reservations')}>
-            Reservas <span className="badge bg-secondary">{reservas.length}</span>
+          <button className={`nav-link ${activeTab === 'calendar' ? 'active' : ''}`} onClick={() => setActiveTab('calendar')}>
+            <i className="fa-solid fa-calendar-days me-1"></i>Calendario y Reservas
           </button>
         </li>
         <li className="nav-item">
           <button className={`nav-link ${activeTab === 'rooms' ? 'active' : ''}`} onClick={() => setActiveTab('rooms')}>
-            Habitaciones
+            <i className="fa-solid fa-door-open me-1"></i>Mapa de Habitaciones
           </button>
         </li>
       </ul>
 
       <div>
         {activeTab === 'dashboard' && <Dashboard stats={dashboardStats} recentReservations={reservas.slice(0, 5)} />}
-        {activeTab === 'reservations' && <Reservations reservations={reservas} processPayment={() => {}} releaseReservation={() => {}} />}
-        {activeTab === 'rooms' && <Rooms rooms={habitaciones.datos} toggleRoom={(id, estado) => manejarActualizacion(id, estado, habitaciones.estado_tabla)} />}
+        {activeTab === 'calendar' && <OperatorCalendar reservations={reservas} rooms={habitaciones} onCreateReservation={crearReserva} />}
+        {activeTab === 'rooms' && <Rooms rooms={habitaciones.datos} toggleRoom={(id, estado) => manejarActualizacion(id, estado)} />}
       </div>
     </div>
   );

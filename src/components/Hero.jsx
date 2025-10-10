@@ -1,21 +1,23 @@
 import React from 'react';
+import heroImage from './image.png'; // Importar la imagen de fondo
 
 export default function Hero() {
+  const heroStyle = {
+    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${heroImage})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    minHeight: '60vh', // Aumentar la altura para más verticalidad
+  };
+
   return (
-    <section className="hero mb-4">
-      <div className="container">
-        <div className="row align-items-center">
-          <div className="col-md-7 text-light">
-            <h1 className="display-6">Hotel Refugio — Confort y excelencia</h1>
-            <p className="lead">Reserva la habitación perfecta para tu próxima estadía. Experiencia cuidada y servicio 24/7.</p>
-            <a href="#rooms" className="btn btn-outline-light me-2">Ver habitaciones</a>
-            <a href="#reserve" className="btn btn-light">Reservar ahora</a>
-          </div>
-          <div className="col-md-5 d-none d-md-block text-end">
-            {/* imagen en background via CSS */}
-          </div>
-        </div>
+    <header 
+      className="hero-section text-center text-white d-flex align-items-center justify-content-center"
+      style={heroStyle}
+    >
+      <div>
+        <h1 className="display-3 fw-bold">Bienvenido a Hotel Refugio</h1>
+        <p className="lead">Tu escape perfecto hacia la tranquilidad y el confort.</p>
       </div>
-    </section>
+    </header>
   );
 }
