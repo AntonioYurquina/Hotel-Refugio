@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import emailjs from 'emailjs-com';
 
-export default function ReservationForm({ room, onClose, addReservation, user }) {
+export default function ReservationForm({ room, onClose, user, initialData, registrarUsuario }) {
   const [form, setForm] = useState({
     user_name: '',
     user_email: '',
-    checkin: '',
-    checkout: '',
-    guests: 1,
+    password: '',
+    confirmPassword: '',
+    createAccount: false,
+    checkin: initialData?.checkin || '',
+    checkout: initialData?.checkout || '',
+    guests: initialData?.guests || 1,
     room_name: room.name,
     room_price: room.price,
     total_price: 0,
@@ -52,55 +55,82 @@ export default function ReservationForm({ room, onClose, addReservation, user })
     if (!form.checkin) e.checkin = 'Fecha check-in requerida';
     if (form.num_nights <= 0) e.checkout = 'Check-out debe ser posterior a check-in';
     if (form.guests < 1 || form.guests > room.capacity) e.guests = `Debe ser entre 1 y ${room.capacity}`;
+    
+    if (form.createAccount) {
+      if (form.password.length < 6) e.password = 'La contraseña debe tener al menos 6 caracteres.';
+      if (form.password !== form.confirmPassword) e.confirmPassword = 'Las contraseñas no coinciden.';
+    }
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   // Envío del formulario por EmailJS
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
     setSubmitting(true);
 
+    // Si el usuario quiere crear una cuenta, lo registramos primero.
+    if (form.createAccount && !user.ok) {
+      const nameParts = form.user_name.split(' ');
+      const userData = {
+        nombre: nameParts[0],
+        apellido: nameParts.slice(1).join(' '),
+        email: form.user_email,
+        contraseña: form.password,
+        telefono: '', // El teléfono no se pide en este formulario
+      };
+      await registrarUsuario(userData);
+    }
+
     // Mapeo de variables EXACTAS para EmailJS
     const templateParams = {
-      to_name: "Hotel Refugio",
+      to_name: "Operador Hotel Refugio",
       from_name: form.user_name,
       reply_to: form.user_email,
-      room_name: form.room_name,
-      checkin: form.checkin,
-      checkout: form.checkout,
-      guests: form.guests,
-      num_nights: form.num_nights,
-      total_price: form.total_price.toFixed(2),
+      // Se consolida toda la información en el campo 'message' para máxima claridad.
       message: `
-        Nueva solicitud de reserva de:
-        Nombre: ${form.user_name}
-        Email: ${form.user_email}
-        Huéspedes: ${form.guests}
+        ========================================
+        NUEVA SOLICITUD DE RESERVA
+        ========================================
 
-        Detalles de la reserva:
-        - Habitación: ${form.room_name}
-        - Noches: ${form.num_nights} (Desde ${form.checkin} hasta ${form.checkout})
-        - Total: $${form.total_price.toFixed(2)}
+        DATOS DEL CLIENTE:
+        ----------------------------------------
+        - ID de Usuario: ${user.datos.id_usuario}
+        - Nombre: ${form.user_name}
+        - Email: ${form.user_email}
+        - Teléfono: ${user.datos.telefono || 'No especificado'}
+
+        DETALLES DE LA SOLICITUD:
+        ----------------------------------------
+        - Habitación Solicitada: ${room.name} (ID: ${room.id})
+        - Check-in: ${form.checkin}
+        - Check-out: ${form.checkout}
+        - Noches: ${form.num_nights}
+        - Huéspedes: ${form.guests}
+
+        CÁLCULO DE PRECIO:
+        ----------------------------------------
+        - Precio por Noche: $${room.price.toFixed(2)}
+        - TOTAL ESTIMADO: $${form.total_price.toFixed(2)}
+
+        ========================================
+        Por favor, contactar al cliente para confirmar la reserva y procesar el pago.
       `,
     };
 
     emailjs
       .send(
-        "service_r4nbki4",     // ⚙️ ID del servicio (ajústalo si cambió)
-        "template_0q6td97",    // ⚙️ ID de la plantilla
+        "service_r4nbki4",
+        "template_0q6td97",
         templateParams,
-        "cy-3jjDdw9Sr3ZLyU"    // ⚙️ Public Key (User ID)
+        "cy-3jjDdw9Sr3ZLyU"
       )
       .then(() => {
         setSubmitted(true);
-        addReservation({
-          id_habitacion: room.id,
-          fecha_entrada: form.checkin,
-          fecha_salida: form.checkout,
-        });
+        // Se elimina la llamada a addReservation, ya que el cliente solo envía una solicitud.
       })
       .catch((error) => {
         console.error("Error al enviar el correo:", error.text);
@@ -113,11 +143,11 @@ export default function ReservationForm({ room, onClose, addReservation, user })
   if (submitted) {
     return (
       <div className="text-center p-4">
-        <i className="fa-solid fa-circle-check fa-3x text-success mb-3"></i>
+        <i className="fa-solid fa-circle-check fa-3x text-primary mb-3"></i>
         <h4>¡Solicitud Enviada!</h4>
         <p>
-          Hemos recibido tu solicitud de reserva. Recibirás una confirmación por correo a{" "}
-          <strong>{form.user_email}</strong> en breve.
+          Hemos recibido tu solicitud. Un operador se pondrá en contacto contigo a{" "}
+          <strong>{form.user_email}</strong> para confirmar la disponibilidad y el pago.
         </p>
         <button className="btn btn-primary" onClick={onClose}>Cerrar</button>
       </div>
@@ -135,6 +165,7 @@ export default function ReservationForm({ room, onClose, addReservation, user })
             className="form-control"
             value={form.user_name}
             onChange={e => setForm({ ...form, user_name: e.target.value })}
+            disabled={user.ok}
           />
           {errors.name && <div className="text-danger small">{errors.name}</div>}
         </div>
@@ -147,6 +178,7 @@ export default function ReservationForm({ room, onClose, addReservation, user })
             className="form-control"
             value={form.user_email}
             onChange={e => setForm({ ...form, user_email: e.target.value })}
+            disabled={user.ok}
           />
           {errors.email && <div className="text-danger small">{errors.email}</div>}
         </div>
@@ -189,11 +221,53 @@ export default function ReservationForm({ room, onClose, addReservation, user })
           {errors.guests && <div className="text-danger small">{errors.guests}</div>}
         </div>
 
+        {/* Sección de Registro para usuarios no logueados */}
+        {!user.ok && (
+          <div className="col-12 mt-4 pt-3 border-top">
+            <div className="form-check mb-3">
+              <input 
+                type="checkbox" 
+                className="form-check-input" 
+                id="createAccountCheck"
+                checked={form.createAccount}
+                onChange={e => setForm({...form, createAccount: e.target.checked})}
+              />
+              <label className="form-check-label" htmlFor="createAccountCheck">
+                Crear una cuenta para futuras reservas
+              </label>
+            </div>
+            {form.createAccount && (
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label">Contraseña</label>
+                  <input 
+                    type="password" 
+                    className="form-control" 
+                    value={form.password}
+                    onChange={e => setForm({...form, password: e.target.value})}
+                  />
+                  {errors.password && <div className="text-danger small">{errors.password}</div>}
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Confirmar Contraseña</label>
+                  <input 
+                    type="password" 
+                    className="form-control" 
+                    value={form.confirmPassword}
+                    onChange={e => setForm({...form, confirmPassword: e.target.value})}
+                  />
+                  {errors.confirmPassword && <div className="text-danger small">{errors.confirmPassword}</div>}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="col-12">
           {form.num_nights > 0 && (
-            <div className="alert alert-info text-center">
+            <div className="alert alert-light text-center">
               Estadía de <strong>{form.num_nights} noches</strong>. Precio Total:{" "}
-              <strong>${form.total_price.toFixed(2)}</strong>
+              <strong className="text-brand-orange">${form.total_price.toFixed(2)}</strong>
             </div>
           )}
         </div>
@@ -207,7 +281,7 @@ export default function ReservationForm({ room, onClose, addReservation, user })
             disabled={submitting || form.num_nights <= 0}
             className="btn btn-primary"
           >
-            {submitting ? 'Enviando Solicitud...' : 'Confirmar Solicitud'}
+            {submitting ? 'Enviando Solicitud...' : 'Enviar Solicitud de Reserva'}
           </button>
         </div>
       </div>

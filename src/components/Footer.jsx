@@ -1,15 +1,17 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="bg-dark text-white mt-5 py-4">
-      <div className="container text-center">
-        <p className="mb-1">&copy; {new Date().getFullYear()} Hotel Refugio. Todos los derechos reservados.</p>
-        <p className="small">
-          <a href="#" className="text-white me-2">Política de Privacidad</a>|
-          <a href="#" className="text-white mx-2">Términos de Servicio</a>|
-          <a href="mailto:contacto@hotelrefugio.example" className="text-white ms-2">Contacto</a>
-        </p>
+    <footer className="bg-dark text-white text-center py-3 mt-auto">
+      <div className="container">
+        <p className="mb-0">&copy; 2025 Hotel Refugio. Todos los derechos reservados.</p>
+        <small>
+          <Link to="/" className="text-white-50">Política de Privacidad</Link> | 
+          <Link to="/" className="text-white-50"> Términos de Servicio</Link> | 
+          <Link to="/" className="text-white-50"> Contacto</Link> | 
+          <Link to="/login" className="text-white-50"> Acceso Personal</Link>
+        </small>
       </div>
     </footer>
   );

@@ -1,12 +1,13 @@
 import React from "react";
-import { createRoot } from "react-dom/client";
+import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 import App from "./App";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js"; // Esta línea es clave para el dropdown
-import "./styles.css";
 
-createRoot(document.getElementById("root")).render(
+// Importar nuestro tema SCSS personalizado en lugar del CSS de Bootstrap
+import "./styles/custom.scss";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <HashRouter>
       <App />

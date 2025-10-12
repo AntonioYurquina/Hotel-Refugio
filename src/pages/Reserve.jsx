@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import RoomList from '../components/RoomList';
-import heroImage from '../components/image.png'; // Importar la imagen
+import heroImage from '../components/image.png';
 
-export default function Reserve({ habitaciones, addReservation, user, reservas }) {
+export default function Reserve({ habitaciones, user, reservas, login, actualizarCredenciales, registrarUsuario }) {
   const [filters, setFilters] = useState({
     checkin: '',
     checkout: '',
@@ -57,8 +57,9 @@ export default function Reserve({ habitaciones, addReservation, user, reservas }
       // 2. Filtrar por disponibilidad de fechas
       const isUnavailable = reservas.some(res => {
         if (res.id_habitacion !== room.id) return false;
-        const resStart = new Date(res.fecha_entrada);
-        const resEnd = new Date(res.fecha_salida);
+        // Corregido: usar fecha_inicio y fecha_fin de la API
+        const resStart = new Date(res.fecha_inicio);
+        const resEnd = new Date(res.fecha_fin);
         // Comprobar si hay solapamiento de fechas
         return (checkinDate < resEnd && checkoutDate > resStart);
       });
@@ -117,7 +118,15 @@ export default function Reserve({ habitaciones, addReservation, user, reservas }
         {showFilterResults && filteredRooms.length === 0 && (
           <div className="alert alert-warning">No se encontraron habitaciones disponibles para los criterios seleccionados.</div>
         )}
-        <RoomList rooms={filteredRooms} addReservation={addReservation} user={user} />
+        <RoomList 
+          rooms={filteredRooms} 
+          user={user} 
+          interactive={true} 
+          initialFilters={filters}
+          login={login}
+          actualizarCredenciales={actualizarCredenciales}
+          registrarUsuario={registrarUsuario}
+        />
       </div>
     </>
   );

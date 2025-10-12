@@ -6,8 +6,11 @@ import Operator from './pages/Operator';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import UserDashboard from './pages/UserDashboard';
-import Reserve from './pages/Reserve'; // <-- Importar nueva página
+import Reserve from './pages/Reserve';
 import { useUsuarioLogic } from './hooks/useUsuarioLogic';
+import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext'; // Importar ToastProvider
+import LoadingSpinner from './components/LoadingSpinner'; // Importar el nuevo spinner
 
 function ProtectedRoute({ user, allowedRoles, children }) {
   if (!user.ok) {
@@ -22,7 +25,7 @@ function ProtectedRoute({ user, allowedRoles, children }) {
   return children;
 }
 
-export default function App() {
+function AppContent() { // Se extrae el contenido para usar el hook
   const {
     usuario,
     credenciales,
@@ -34,11 +37,17 @@ export default function App() {
     manejarActualizacion,
     reservas,
     descargarReservas,
-    crearReserva,
-    eliminarReserva,
+    manejarNuevaReserva,
+    manejarEliminarReserva,
     allUsers,
     descargarUsuarios,
-    eliminarUsuario
+    eliminarUsuario,
+    registrarUsuario,
+    actualizarHabitacionAdmin,
+    actualizarUsuario,
+    actualizarReserva,
+    crearHabitacion, // Importar nueva función
+    eliminarHabitacion, // Importar nueva función
   } = useUsuarioLogic();
 
   useEffect(() => {
@@ -48,20 +57,23 @@ export default function App() {
   }, []);
 
   if (habitaciones.datos === null || reservas.datos === null || allUsers.datos === null) {
-    return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
     <Layout user={usuario} logout={logout}>
       <Routes>
-        <Route path="/" element={<Home habitaciones={habitaciones.datos} addReservation={crearReserva} user={usuario} />} />
-        <Route path="/reserve" element={<Reserve habitaciones={habitaciones.datos} addReservation={crearReserva} user={usuario} reservas={reservas.datos} />} />
+        <Route path="/" element={<Home habitaciones={habitaciones.datos} user={usuario} />} />
+        <Route path="/reserve" element={
+          <Reserve 
+            habitaciones={habitaciones.datos} 
+            user={usuario} 
+            reservas={reservas.datos}
+            login={login}
+            actualizarCredenciales={actualizarCredenciales}
+            registrarUsuario={registrarUsuario}
+          />
+        } />
         <Route path="/login" element={
           usuario.ok ? (
             <Navigate to={
@@ -74,12 +86,17 @@ export default function App() {
               credenciales={credenciales} 
               actualizarCredenciales={actualizarCredenciales} 
               handleLogin={login} 
+              registrarUsuario={registrarUsuario}
             />
           )
         } />
         <Route path="/dashboard" element={
           <ProtectedRoute user={usuario} allowedRoles={['cliente']}>
-            <UserDashboard user={usuario} allReservations={reservas.datos} />
+            <UserDashboard 
+              user={usuario} 
+              allReservations={reservas.datos} 
+              habitaciones={habitaciones.datos} 
+            />
           </ProtectedRoute>
         } />
         <Route path="/operator" element={
@@ -89,7 +106,14 @@ export default function App() {
               habitaciones={habitaciones} 
               manejarActualizacion={manejarActualizacion}
               reservas={reservas.datos}
-              crearReserva={crearReserva}
+              crearReserva={manejarNuevaReserva}
+              eliminarReserva={manejarEliminarReserva}
+              actualizarReserva={actualizarReserva}
+              cargarHabitaciones={cargarHabitaciones}
+              descargarReservas={descargarReservas}
+              users={allUsers.datos}
+              updateUser={actualizarUsuario}
+              deleteUser={eliminarUsuario}
             />
           </ProtectedRoute>
         } />
@@ -101,12 +125,27 @@ export default function App() {
               manejarActualizacion={manejarActualizacion}
               reservas={reservas.datos}
               users={allUsers.datos}
-              deleteReservation={eliminarReserva}
+              deleteReservation={manejarEliminarReserva}
               deleteUser={eliminarUsuario}
+              updateRoom={actualizarHabitacionAdmin}
+              updateUser={actualizarUsuario}
+              createRoom={crearHabitacion}
+              deleteRoom={eliminarHabitacion}
+              createUser={registrarUsuario}
             />
           </ProtectedRoute>
         } />
       </Routes>
     </Layout>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

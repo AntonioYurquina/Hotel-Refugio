@@ -1,60 +1,64 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import RegisterForm from './RegisterForm';
 
-export default function Login({ credenciales, actualizarCredenciales, handleLogin }) {
-  const navigate = useNavigate();
+export default function Login({ credenciales, actualizarCredenciales, handleLogin, registrarUsuario }) {
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  const onSubmit = async (e) => {
+  const handleInputChange = (e) => {
+    actualizarCredenciales(
+      e.target.name === 'email' ? e.target.value : credenciales.email,
+      e.target.name === 'contraseña' ? e.target.value : credenciales.contraseña
+    );
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const user = await handleLogin();
-    if (user && user.ok) {
-      // Redirección basada en el rol del usuario
-      switch (user.datos.tipo_usuario) {
-        case 'administrador':
-          navigate('/admin');
-          break;
-        case 'operador':
-          navigate('/operator');
-          break;
-        default: // Para 'cliente' y cualquier otro rol
-          navigate('/dashboard');
-          break;
-      }
-    }
+    handleLogin();
   };
 
   return (
-    <div className="container py-5" style={{ maxWidth: '400px' }}>
-      <div className="card">
-        <div className="card-body p-4">
-          <h3 className="card-title text-center mb-4">Iniciar Sesión</h3>
-          <form onSubmit={onSubmit}>
-            <div className="mb-3">
-              <label htmlFor="email" className="form-label">Email</label>
-              <input
-                type="email"
-                className="form-control"
-                id="email"
-                value={credenciales.email}
-                onChange={(e) => actualizarCredenciales(e.target.value, credenciales.contraseña)}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label htmlFor="password" className="form-label">Contraseña</label>
-              <input
-                type="password"
-                className="form-control"
-                id="password"
-                value={credenciales.contraseña}
-                onChange={(e) => actualizarCredenciales(credenciales.email, e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary w-100">
-              Acceder
-            </button>
-          </form>
+    <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: '80vh' }}>
+      <div className="card shadow-lg" style={{ width: '100%', maxWidth: '500px' }}>
+        <div className="card-body p-5">
+          <h2 className="card-title text-center mb-4">{isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión'}</h2>
+          
+          {isRegistering ? (
+            <RegisterForm 
+              onRegister={registrarUsuario} 
+              onSwitchToLogin={() => setIsRegistering(false)} 
+            />
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="mb-3">
+                <label className="form-label">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  className="form-control"
+                  value={credenciales.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Contraseña</label>
+                <input
+                  type="password"
+                  name="contraseña"
+                  className="form-control"
+                  value={credenciales.contraseña}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <button type="submit" className="btn btn-primary w-100 mt-3">
+                Acceder
+              </button>
+              <p className="text-center mt-3">
+                ¿No tienes una cuenta? <button type="button" className="btn btn-link p-0" onClick={() => setIsRegistering(true)}>Regístrate aquí</button>
+              </p>
+            </form>
+          )}
         </div>
       </div>
     </div>

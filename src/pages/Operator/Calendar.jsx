@@ -6,53 +6,72 @@ import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import es from 'date-fns/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { useTheme } from '../../context/ThemeContext';
 
 const locales = { 'es': es };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
-export default function OperatorCalendar({ reservations, rooms, onCreateReservation }) {
-  const [showModal, setShowModal] = useState(false);
-  const [slotInfo, setSlotInfo] = useState(null);
-  const [formData, setFormData] = useState({ id_habitacion: '', id_usuario: '' });
+export default function OperatorCalendar({ reservations, onSelectEvent, onSelectSlot }) {
+  const { theme } = useTheme();
+  const [showArchived, setShowArchived] = useState(false);
 
   const events = useMemo(() => {
     if (!reservations) return [];
-    return reservations.map(res => ({
+    
+    const filteredReservations = showArchived
+      ? reservations
+      : reservations.filter(res => res.estado === 'confirmada' || res.estado === 'pendiente');
+
+    return filteredReservations.map(res => ({
       title: `Reserva #${res.id_reserva} - Hab: ${res.id_habitacion}`,
-      start: new Date(res.fecha_entrada),
-      end: new Date(res.fecha_salida),
+      start: new Date(res.fecha_inicio),
+      end: new Date(res.fecha_fin),
       allDay: true,
-      resourceId: res.id_habitacion,
+      resource: res,
     }));
-  }, [reservations]);
+  }, [reservations, showArchived]);
 
-  const handleSelectSlot = (slot) => {
-    setSlotInfo(slot);
-    setFormData({ id_habitacion: '', id_usuario: '', fecha_entrada: format(slot.start, 'yyyy-MM-dd'), fecha_salida: format(slot.end, 'yyyy-MM-dd') });
-    setShowModal(true);
-  };
-
-  const handleCreate = () => {
-    if (!formData.id_habitacion || !formData.id_usuario) {
-      alert('Por favor, complete todos los campos.');
-      return;
-    }
-    onCreateReservation(formData);
-    setShowModal(false);
+  const eventStyleGetter = (event) => {
+    const status = event.resource.estado;
+    const colors = {
+      light: { confirmada: '#198754', pendiente: '#ffc107', cancelada: '#dc3545', finalizada: '#6c757d' },
+      dark: { confirmada: '#20c997', pendiente: '#ffca2c', cancelada: '#fd7e14', finalizada: '#adb5bd' }
+    };
+    return {
+      style: {
+        backgroundColor: colors[theme][status] || colors[theme]['finalizada'],
+        borderRadius: '5px',
+        opacity: 0.8,
+        color: status === 'pendiente' ? 'black' : 'white',
+        border: '0px',
+        display: 'block'
+      }
+    };
   };
 
   return (
     <section>
-      <h5>Calendario de Reservas</h5>
-      <p className="text-muted">Haz clic y arrastra en el calendario para crear una nueva reserva.</p>
-      <div style={{ height: '600px' }}>
+      <div className="form-check form-switch mb-3">
+        <input 
+          className="form-check-input" 
+          type="checkbox" 
+          role="switch" 
+          id="showArchivedSwitch"
+          checked={showArchived}
+          onChange={() => setShowArchived(!showArchived)}
+        />
+        <label className="form-check-label" htmlFor="showArchivedSwitch">Mostrar canceladas y finalizadas</label>
+      </div>
+      <div style={{ height: '600px' }} className="calendar-container">
         <Calendar
           localizer={localizer}
           events={events}
           startAccessor="start"
           endAccessor="end"
           selectable
-          onSelectSlot={handleSelectSlot}
+          onSelectSlot={onSelectSlot}
+          onSelectEvent={onSelectEvent}
+          eventPropGetter={eventStyleGetter}
           messages={{
             next: "Siguiente",
             previous: "Anterior",
@@ -61,42 +80,10 @@ export default function OperatorCalendar({ reservations, rooms, onCreateReservat
             week: "Semana",
             day: "Día",
             agenda: "Agenda",
+            noEventsInRange: "No hay reservas en este rango.",
           }}
         />
       </div>
-
-      {showModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Crear Nueva Reserva</h5>
-                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-              </div>
-              <div className="modal-body">
-                <p><strong>Desde:</strong> {formData.fecha_entrada} <strong>Hasta:</strong> {formData.fecha_salida}</p>
-                <div className="mb-3">
-                  <label className="form-label">Habitación</label>
-                  <select className="form-select" value={formData.id_habitacion} onChange={e => setFormData({...formData, id_habitacion: e.target.value})}>
-                    <option value="">Seleccione una habitación</option>
-                    {rooms.datos.filter(r => r.estado === 'disponible').map(r => (
-                      <option key={r.id_habitacion} value={r.id_habitacion}>Habitación {r.numero} ({r.tipo})</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">ID de Usuario Cliente</label>
-                  <input type="number" className="form-control" value={formData.id_usuario} onChange={e => setFormData({...formData, id_usuario: e.target.value})} />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                <button type="button" className="btn btn-primary" onClick={handleCreate}>Crear Reserva</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

@@ -3,10 +3,11 @@ import { Pie, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { useTheme } from '../../context/ThemeContext';
 import { differenceInDays } from 'date-fns';
+import StatCard from './StatCard';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
-export default function DashboardAdmin({ rooms, users, reservations }) {
+export default function Admin({ rooms, users, reservations }) {
   const { theme } = useTheme();
 
   const safeReservations = reservations || [];
@@ -52,14 +53,19 @@ export default function DashboardAdmin({ rooms, users, reservations }) {
       acc[room.estado] = (acc[room.estado] || 0) + 1;
       return acc;
     }, {});
-    return {
+    const pieData = {
       labels: Object.keys(statusCounts),
       datasets: [{
         data: Object.values(statusCounts),
-        backgroundColor: themeColors.pie[theme],
-        borderColor: theme === 'light' ? '#fff' : '#300A24', // Coincide con el fondo oscuro
+        backgroundColor: ['#27AE60', '#E74C3C', '#F1C40F', '#95A5A6'], // Paleta profesional
+        borderColor: theme === 'light' ? '#fff' : '#242424',
         borderWidth: 2,
       }],
+    };
+
+    return {
+      labels: Object.keys(statusCounts),
+      datasets: [pieData],
     };
   }, [safeRooms, theme]);
 
@@ -124,7 +130,16 @@ export default function DashboardAdmin({ rooms, users, reservations }) {
         </div>
       </div>
 
-      <div className="row g-4">
+      {/* KPIs Estratégicos */}
+      <div className="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-4">
+        <StatCard title="Ingresos Totales" value={stats.totalRevenue} icon="fa-sack-dollar" color="text-success" />
+        <StatCard title="Ocupación Actual" value={stats.occupancy} icon="fa-chart-pie" color="text-danger" />
+        <StatCard title="Estadía Promedio" value={`${stats.avgStay} Noches`} icon="fa-bed" color="text-primary" />
+        <StatCard title="Tarifa Promedio" value={stats.avgRate} icon="fa-tag" color="text-info" />
+      </div>
+
+      {/* Visualizaciones de Datos */}
+      <div className="row g-4 mb-4">
         <div className="col-md-5">
           <h5>Estado de Habitaciones</h5>
           <div className="card p-3">

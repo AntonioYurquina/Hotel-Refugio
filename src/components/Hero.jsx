@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import heroImage from './image.png'; // Importar la imagen de fondo
 
 export default function Hero() {
@@ -11,12 +12,15 @@ export default function Hero() {
 
   return (
     <header 
-      className="hero-section text-center text-white d-flex align-items-center justify-content-center"
+      className="hero-section text-center d-flex align-items-center justify-content-center"
       style={heroStyle}
     >
-      <div>
+      <div className="text-white">
         <h1 className="display-3 fw-bold">Bienvenido a Hotel Refugio</h1>
         <p className="lead">Tu escape perfecto hacia la tranquilidad y el confort.</p>
+        <Link to="/reserve" className="btn btn-primary btn-lg mt-3">
+          Reservar Ahora
+        </Link>
       </div>
     </header>
   );

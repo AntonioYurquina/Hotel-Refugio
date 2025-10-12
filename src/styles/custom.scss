@@ -1,0 +1,157 @@
+// 1. Importar funciones y variables de Bootstrap para poder sobreescribirlas
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+
+// Paleta de Colores Profesional
+$orange: #E95420;
+$dark-gray: #1A1A1A; // Fondo principal oscuro
+$medium-gray: #242424; // Fondo de tarjetas oscuro
+$light-gray: #444; // Bordes oscuros
+$text-light: #E0E0E0; // Texto principal oscuro
+
+$success: #27AE60;
+$warning: #F1C40F;
+$danger: #E74C3C;
+$info: #3498DB;
+$secondary-text: #95A5A6;
+
+// 1. Sobrescribir variables de Bootstrap
+$primary: $orange;
+$body-bg: #f8f9fa;
+$body-color: #212529;
+
+// 2. Importar Bootstrap
+@import "bootstrap/scss/bootstrap";
+
+// 3. Estilos personalizados
+.hero-section {
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.main-content {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+// Clase de utilidad para el color de marca
+.text-brand-orange {
+  color: $primary !important;
+}
+
+// Estilo profesional para botones primarios
+.btn-primary {
+  background-color: $primary;
+  border-color: $primary;
+  color: #fff; // Asegurar texto blanco
+
+  &:hover {
+    background-color: darken($primary, 5%);
+    border-color: darken($primary, 5%);
+  }
+}
+
+// Estilos para el select de estado de reserva coloreado
+// Tema Claro
+.status-select-success { background-color: $success; color: white; }
+.status-select-warning { background-color: $warning; color: black; }
+.status-select-danger  { background-color: $danger; color: white; }
+.status-select-secondary{ background-color: $secondary-text; color: white; }
+
+// Tema Oscuro
+[data-bs-theme="dark"] {
+  body {
+    background-color: $dark-gray;
+    color: $text-light;
+  }
+  .card, .list-group-item, .modal-content {
+    background-color: $medium-gray;
+    border-color: $light-gray;
+  }
+
+  // Paleta profesional actualizada para los selectores de estado
+  .status-select-success { background-color: $success; color: white; }
+  .status-select-warning { background-color: $warning; color: black; }
+  .status-select-danger  { background-color: $danger; color: white; }
+  .status-select-secondary{ background-color: $secondary-text; color: white; }
+
+  .status-select-success,
+  .status-select-warning,
+  .status-select-danger,
+  .status-select-secondary {
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+}
+
+// Estilos para el mapa de ubicación
+.map-container {
+  position: relative;
+  overflow: hidden;
+  padding-top: 75%;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+.map-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none; 
+}
+.map-container::after {
+  content: '';
+  width: 30px;
+  height: 30px;
+  background-color: #dc3545;
+  border: 2px solid white;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -15px;
+  margin-top: -30px;
+  box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
+}
+
+// Ajustes para el carrusel de habitaciones en móviles
+@media (max-width: 767.98px) {
+  #roomCarousel .carousel-inner .carousel-item > div {
+    display: none;
+  }
+  #roomCarousel .carousel-inner .carousel-item > div:first-child {
+    display: block;
+  }
+}
+
+// Estilos para resaltar las flechas del carrusel
+#roomCarousel .carousel-control-prev,
+#roomCarousel .carousel-control-next {
+  width: 5%;
+  opacity: 0.7;
+  transition: opacity 0.2s ease-in-out;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+#roomCarousel .carousel-control-prev-icon,
+#roomCarousel .carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  padding: 1.5rem;
+  background-size: 50% 50%;
+}
+
+// Efecto de hover para las tarjetas de habitación
+.card-hover-effect {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+  }
+}

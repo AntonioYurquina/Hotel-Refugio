@@ -1,46 +1,50 @@
-import React, { useState, useMemo } from 'react';
+import React from 'react';
+
+const getStatusBadge = (status) => {
+  switch (status) {
+    case 'confirmada': return 'bg-success';
+    case 'pendiente': return 'bg-warning text-dark';
+    case 'cancelada': return 'bg-danger';
+    case 'finalizada': return 'bg-secondary';
+    default: return 'bg-light';
+  }
+};
 
 export default function ReservationsAdmin({ reservations, onDelete }) {
-  const [query, setQuery] = useState('');
-
-  const filteredReservations = useMemo(() => {
-    if (!reservations) return [];
-    return reservations.filter(res =>
-      String(res.id_habitacion).includes(query) ||
-      String(res.id_usuario).includes(query)
-    );
-  }, [reservations, query]);
-
   return (
     <section>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5>Todas las Reservas ({filteredReservations.length})</h5>
-        <input
-          type="text"
-          className="form-control form-control-sm w-auto"
-          placeholder="Buscar por ID de habitación o usuario..."
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
+        <h5>Reservas ({reservations.length})</h5>
       </div>
-      <div className="list-group">
-        {filteredReservations.length > 0 ? filteredReservations.map(res => (
-          <div key={res.id_reserva} className="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-              <strong>Reserva #{res.id_reserva}</strong>
-              <small className="d-block text-muted">
-                Habitación: {res.id_habitacion} | Usuario: {res.id_usuario} | Desde: {new Date(res.fecha_entrada).toLocaleDateString()} | Hasta: {new Date(res.fecha_salida).toLocaleDateString()}
-              </small>
-            </div>
-            <div>
-              <button className="btn btn-sm btn-outline-danger" onClick={() => onDelete(res.id_reserva)}>
-                <i className="fa-solid fa-trash-can"></i> Eliminar
-              </button>
-            </div>
-          </div>
-        )) : (
-          <p className="text-muted">No se encontraron reservas.</p>
-        )}
+      <div className="table-responsive">
+        <table className="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>ID Reserva</th>
+              <th>ID Usuario</th>
+              <th>ID Hab.</th>
+              <th>Fechas</th>
+              <th>Estado</th>
+              <th className="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reservations.map(res => (
+              <tr key={res.id_reserva}>
+                <td>#{res.id_reserva}</td>
+                <td>{res.id_usuario}</td>
+                <td>{res.id_habitacion}</td>
+                <td>{new Date(res.fecha_inicio).toLocaleDateString()} - {new Date(res.fecha_fin).toLocaleDateString()}</td>
+                <td><span className={`badge ${getStatusBadge(res.estado)}`}>{res.estado}</span></td>
+                <td className="text-end">
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => onDelete(res.id_reserva)}>
+                    <i className="fa-solid fa-trash-can"></i>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );
