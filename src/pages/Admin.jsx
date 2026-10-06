@@ -8,6 +8,13 @@ import { Pie } from 'react-chartjs-2';
 import { useTheme } from '../context/ThemeContext';
 import RoomEditForm from './Admin/RoomEditForm';
 import UserEditForm from './Admin/UserEditForm';
+import { formatoPrecio } from '../utils/moneda';
+import { calcularOcupacion } from '../utils/ocupacion';
+
+const COLORES_ESTADO_HABITACION = {
+  light: { disponible: '#198754', ocupada: '#dc3545', mantenimiento: '#ffc107', cerrada: '#6c757d' },
+  dark: { disponible: '#20c997', ocupada: '#ff8c00', mantenimiento: '#ffca2c', cerrada: '#adb5bd' },
+};
 
 const StatCard = ({ title, value, icon, color }) => (
   <div className="col">
@@ -34,9 +41,7 @@ export default function Admin({ user, habitaciones, reservas, users, deleteReser
       return acc + (room && nights > 0 ? nights * parseFloat(room.precio_noche) : 0);
     }, 0);
     
-    const occupancy = habitaciones.datos.length > 0 
-      ? ((habitaciones.datos.filter(r => r.estado === 'ocupada').length) / habitaciones.datos.length) * 100 
-      : 0;
+    const occupancy = calcularOcupacion(habitaciones.datos);
 
     const statusCounts = habitaciones.datos.reduce((acc, room) => {
       acc[room.estado] = (acc[room.estado] || 0) + 1;
@@ -47,7 +52,7 @@ export default function Admin({ user, habitaciones, reservas, users, deleteReser
       labels: Object.keys(statusCounts),
       datasets: [{
         data: Object.values(statusCounts),
-        backgroundColor: theme === 'light' ? ['#198754', '#dc3545', '#ffc107', '#6c757d'] : ['#20c997', '#ff8c00', '#ffca2c', '#adb5bd'],
+        backgroundColor: Object.keys(statusCounts).map(estado => COLORES_ESTADO_HABITACION[theme][estado] || '#adb5bd'),
         borderColor: theme === 'light' ? '#fff' : '#300A24',
         borderWidth: 2,
       }],
@@ -55,8 +60,8 @@ export default function Admin({ user, habitaciones, reservas, users, deleteReser
 
     return {
       stats: {
-        totalRevenue: totalRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }),
-        avgRate: finalizadas.length > 0 ? (totalRevenue / finalizadas.length).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) : '$0',
+        totalRevenue: formatoPrecio(totalRevenue),
+        avgRate: totalNights > 0 ? formatoPrecio(totalRevenue / totalNights) : formatoPrecio(0),
         avgStay: finalizadas.length > 0 ? (totalNights / finalizadas.length).toFixed(1) : 0,
         occupancy: occupancy.toFixed(1) + '%',
       },

@@ -3,7 +3,7 @@ import RoomList from '../components/RoomList';
 import heroImage from '../components/image.png';
 import { fotosHabitacion } from '../api/imagenes';
 
-export default function Reserve({ habitaciones, user, reservas, login, actualizarCredenciales, registrarUsuario }) {
+export default function Reserve({ habitaciones, user, reservas, login, actualizarCredenciales, registrarUsuario, crearReserva }) {
   const [filters, setFilters] = useState({
     checkin: '',
     checkout: '',
@@ -123,6 +123,7 @@ export default function Reserve({ habitaciones, user, reservas, login, actualiza
           login={login}
           actualizarCredenciales={actualizarCredenciales}
           registrarUsuario={registrarUsuario}
+          crearReserva={crearReserva}
         />
       </div>
     </>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatoPrecio } from '../../utils/moneda';
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -37,7 +38,7 @@ export default function RoomsAdmin({ rooms, onAdd, onEdit, onDelete }) {
                 <td><strong>{room.numero}</strong></td>
                 <td>{room.tipo}</td>
                 <td>{room.capacidad}</td>
-                <td className="fw-bold text-brand-orange">${parseFloat(room.precio_noche).toFixed(2)}</td>
+                <td className="fw-bold text-brand-orange">{formatoPrecio(room.precio_noche)}</td>
                 <td><span className={`badge ${getStatusBadge(room.estado)}`}>{room.estado}</span></td>
                 <td className="text-end">
                   <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => onEdit(room)}>

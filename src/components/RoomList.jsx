@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import RoomCard from './RoomCard';
 import ReservationForm from './ReservationForm';
 import AuthInModal from './AuthInModal';
+import { formatoPrecio } from '../utils/moneda';
 
-export default function RoomList({ rooms, user, interactive, initialFilters, login, actualizarCredenciales, registrarUsuario }) {
+export default function RoomList({ rooms, user, interactive, initialFilters, login, actualizarCredenciales, registrarUsuario, crearReserva }) {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -78,7 +79,7 @@ export default function RoomList({ rooms, user, interactive, initialFilters, log
                     <ul>
                       {selectedRoom.amenities.map(a => <li key={a}>{a}</li>)}
                     </ul>
-                    <p className="fs-4 fw-bold text-primary">${selectedRoom.price.toFixed(2)} <span className="fs-6 fw-normal text-muted">/ noche</span></p>
+                    <p className="fs-4 fw-bold text-primary">{formatoPrecio(selectedRoom.price)} <span className="fs-6 fw-normal text-muted">/ noche</span></p>
                   </div>
                 </div>
                 <hr />
@@ -90,6 +91,7 @@ export default function RoomList({ rooms, user, interactive, initialFilters, log
                       onClose={handleCloseModal} 
                       user={user} 
                       initialData={initialFilters}
+                      crearReserva={crearReserva}
                     />
                   ) : (
                     isModalOpen ? (

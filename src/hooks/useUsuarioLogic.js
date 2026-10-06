@@ -28,10 +28,11 @@ export function useUsuarioLogic() {
   }, [usuario]);
 
   // --- LÓGICA DE AUTENTICACIÓN Y USUARIOS ---
-  async function login() {
-    if (!credenciales.email || !credenciales.contraseña) return;
+  // Acepta credenciales explícitas para no depender de un setState que todavía no se aplicó
+  async function login(email = credenciales.email, contraseña = credenciales.contraseña) {
+    if (!email || !contraseña) return;
     try {
-      const data = await api.login(credenciales.email, credenciales.contraseña);
+      const data = await api.login(email, contraseña);
       setUsuario(data);
       addToast(`Bienvenido, ${data.datos.nombre}`, 'success');
     } catch (error) {
@@ -61,7 +62,7 @@ export function useUsuarioLogic() {
   // Registrar, actualizar y eliminar usuarios son simulaciones locales a propósito:
   // la base de demostración es pública y no debe recibir datos personales reales.
   async function registrarUsuario(userData) {
-    const newUser = { id_usuario: Date.now(), ...userData, tipo_usuario: 'cliente' };
+    const newUser = { id_usuario: Date.now(), ...userData, tipo_usuario: 'cliente', simulado: true };
     setAllUsers(prev => ({ ...prev, datos: [newUser, ...prev.datos] }));
     setUsuario({ ok: true, datos: newUser });
     addToast(`¡Bienvenido, ${userData.nombre}! Registro exitoso (simulado).`, 'success');
@@ -152,9 +153,11 @@ export function useUsuarioLogic() {
         estado_tabla: nuevaReserva.estado_tabla
       }));
       addToast('Reserva creada con éxito.', 'success');
+      return true;
     } catch (error) {
       console.error("Error al crear reserva:", error);
       addToast(`Error al crear la reserva: ${error.message}`, 'error');
+      return false;
     }
   }
 

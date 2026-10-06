@@ -12,6 +12,7 @@ import OperatorStatistics from './Operator/OperatorStatistics';
 import ReservationDetailsModal from './Operator/ReservationDetailsModal';
 import ReservationStatusManager from './Operator/ReservationStatusManager';
 import ReservationHistogram from './Operator/ReservationHistogram';
+import { calcularOcupacion } from '../utils/ocupacion';
 
 export default function Operator({ user, habitaciones, manejarActualizacion, reservas, crearReserva, eliminarReserva, actualizarReserva, cargarHabitaciones, descargarReservas, users }) {
   const navigate = useNavigate();
@@ -24,9 +25,8 @@ export default function Operator({ user, habitaciones, manejarActualizacion, res
 
   const stats = useMemo(() => {
     if (!habitaciones.datos || !reservas) return {};
-    const totalRooms = habitaciones.datos.length;
     const availableRooms = habitaciones.datos.filter(r => r.estado === 'disponible').length;
-    const occupancy = totalRooms > 0 ? ((totalRooms - availableRooms) / totalRooms) * 100 : 0;
+    const occupancy = calcularOcupacion(habitaciones.datos);
     
     const today = new Date().setHours(0, 0, 0, 0);
     const arrivalsToday = reservas.filter(res => new Date(res.fecha_inicio).setHours(0, 0, 0, 0) === today && res.estado === 'confirmada').length;
@@ -42,9 +42,9 @@ export default function Operator({ user, habitaciones, manejarActualizacion, res
     };
   }, [habitaciones, reservas]);
 
-  const handleSaveReservation = (formData) => {
-    crearReserva(formData);
-    setShowCreateModal(false);
+  const handleSaveReservation = async (formData) => {
+    // Si la base la rechaza (p. ej. fechas superpuestas) el formulario queda abierto
+    if (await crearReserva(formData)) setShowCreateModal(false);
   };
 
   const handleUpdateReservation = (formData) => {

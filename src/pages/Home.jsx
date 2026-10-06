@@ -46,7 +46,7 @@ export default function Home({ habitaciones, user }) {
         {/* Nueva Sección de Ubicación */}
         <section className="pt-4">
           <h2 className="text-center mb-5">Encuéntranos</h2>
-          <div className="row g-5 align-items-center">
+          <div className="row g-4 g-lg-5 align-items-center">
             <div className="col-lg-6">
               <LocationMap />
             </div>

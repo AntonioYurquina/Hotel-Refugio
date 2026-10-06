@@ -10,9 +10,9 @@ export default function OperatorStatistics({ reservations }) {
 
   const themeColors = {
     pie: {
-      // Paleta profesional con naranja como acento
-      light: ['#27AE60', '#E95420', '#E74C3C', '#95A5A6'],
-      dark: ['#27AE60', '#E95420', '#E74C3C', '#95A5A6'],
+      // Mismos colores por estado que el calendario y el rack
+      light: ['#198754', '#ffc107', '#dc3545', '#6c757d'],
+      dark: ['#20c997', '#ffca2c', '#fd7e14', '#adb5bd'],
     },
     text: theme === 'light' ? '#495057' : '#dee2e6',
   };

@@ -23,7 +23,8 @@ Entrá desde **Login** con cualquiera de estos usuarios. La contraseña de todos
 
 - **Sitio público.** Catálogo y carrusel de habitaciones con fotos, y un buscador por fechas y
   cantidad de huéspedes que descarta las habitaciones ya reservadas en ese período. La solicitud
-  de reserva calcula noches y total, y se envía por correo (EmailJS).
+  de reserva calcula noches y total, queda registrada como reserva pendiente para el operador y
+  además se avisa por correo (EmailJS).
 - **Panel del cliente.** Reservas próximas y pasadas, con recomendaciones de habitaciones libres.
 - **Panel del operador.** Calendario de reservas, rack por habitación y día, indicadores de
   ocupación, llegadas, salidas y pendientes, mapa de habitaciones para cambiar su estado, y gestor
@@ -56,22 +57,44 @@ El esquema completo está en [`supabase/schema.sql`](supabase/schema.sql).
 
 ## Correrlo en local
 
+Requiere Node 18+ y Docker.
+
 ```bash
 npm install
+
+# Base local: PostgreSQL + PostgREST, igual que Supabase, con los datos de ejemplo
+docker compose -f supabase/local/docker-compose.yml up -d
+
+# Conectar el sitio a la base local
+cat > .env.local <<'ENV'
+VITE_SUPABASE_URL=http://localhost:5173
+VITE_SUPABASE_ANON_KEY=local
+ENV
+
 npm run dev
 ```
 
-El archivo `.env` apunta a la base de demostración (la URL y la clave pública `anon` son
-públicas por diseño; la protección real es RLS). Para usar tu propia base:
+Abrir **http://localhost:5173/Hotel-Refugio/**. En desarrollo, Vite reenvía `/rest/v1` a la base local.
+La pantalla de login tiene botones para completar las cuentas de demostración.
+
+- Recargar los datos de ejemplo:
+  `docker compose -f supabase/local/docker-compose.yml exec db psql -U postgres -c "select reset_demo()"`
+- Aplicar cambios de `supabase/schema.sql` (se puede correr las veces que haga falta):
+  `docker compose -f supabase/local/docker-compose.yml exec -T db psql -U postgres < supabase/schema.sql`
+- Apagar la base: `docker compose -f supabase/local/docker-compose.yml down` (agregar `-v` para borrarla).
+
+### Con Supabase
 
 1. Crear un proyecto gratuito en [supabase.com](https://supabase.com).
 2. En **SQL Editor**, pegar y ejecutar [`supabase/schema.sql`](supabase/schema.sql).
-3. En **Project Settings → API**, copiar la URL y la clave pública a un archivo `.env.local`:
+3. En **Project Settings → API**, copiar la URL y la clave pública a `.env.local`:
 
    ```
    VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co
    VITE_SUPABASE_ANON_KEY=tu-clave-publica
    ```
+
+La URL y la clave `anon` son públicas por diseño; la protección real es RLS.
 
 Para generar el build: `npm run build`.
 

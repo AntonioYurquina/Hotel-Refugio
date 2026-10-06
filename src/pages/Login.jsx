@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import RegisterForm from './RegisterForm';
+import CuentasDemo from '../components/CuentasDemo';
 
 export default function Login({ credenciales, actualizarCredenciales, handleLogin, registrarUsuario }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -57,6 +58,7 @@ export default function Login({ credenciales, actualizarCredenciales, handleLogi
               <p className="text-center mt-3">
                 ¿No tienes una cuenta? <button type="button" className="btn btn-link p-0" onClick={() => setIsRegistering(true)}>Regístrate aquí</button>
               </p>
+              <CuentasDemo onElegir={actualizarCredenciales} />
             </form>
           )}
         </div>

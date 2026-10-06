@@ -210,6 +210,15 @@ begin
     (5,  9, hoy + 10, hoy + 14, 'pendiente'),
     (4,  8, hoy + 12, hoy + 15, 'confirmada'),
     (8,  5, hoy + 6,  hoy + 8,  'cancelada');
+
+  -- Cada reserva se "creó" entre 4 y 29 días antes de la llegada (nunca en el futuro),
+  -- para que el histograma muestre una distribución creíble y no todo en el día de hoy.
+  update public.reservas
+  set fecha_creacion = least(
+    now() - make_interval(hours => id_reserva),
+    (fecha_inicio - (4 + (id_reserva * 7) % 26))::timestamp
+      + make_interval(hours => 9 + id_reserva % 10, mins => (id_reserva * 13) % 60)
+  );
 end;
 $$;
 

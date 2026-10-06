@@ -130,7 +130,7 @@ $body-color: #212529;
 // Estilos para resaltar las flechas del carrusel
 #roomCarousel .carousel-control-prev,
 #roomCarousel .carousel-control-next {
-  width: 5%;
+  width: 3.5rem; // del ancho del círculo, para que no desborde en pantallas angostas
   opacity: 0.7;
   transition: opacity 0.2s ease-in-out;
 

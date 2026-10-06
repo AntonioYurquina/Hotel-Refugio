@@ -72,6 +72,7 @@ function AppContent() { // Se extrae el contenido para usar el hook
             login={login}
             actualizarCredenciales={actualizarCredenciales}
             registrarUsuario={registrarUsuario}
+            crearReserva={manejarNuevaReserva}
           />
         } />
         <Route path="/login" element={

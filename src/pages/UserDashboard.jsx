@@ -99,7 +99,7 @@ export default function UserDashboard({ user, allReservations, habitaciones }) {
           </Link>
         </div>
       ) : (
-        <div className="row g-5">
+        <div className="row g-4 g-lg-5">
           <div className="col-lg-6">
             <h3 className="h4 mb-3">Próximas Reservas</h3>
             {upcomingReservations.length > 0 ? (

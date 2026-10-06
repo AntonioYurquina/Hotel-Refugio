@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import emailjs from 'emailjs-com';
+import { formatoPrecio } from '../utils/moneda';
 
-export default function ReservationForm({ room, onClose, user, initialData, registrarUsuario }) {
+export default function ReservationForm({ room, onClose, user, initialData, registrarUsuario, crearReserva }) {
   const [form, setForm] = useState({
     user_name: '',
     user_email: '',
@@ -65,7 +66,7 @@ export default function ReservationForm({ room, onClose, user, initialData, regi
     return Object.keys(e).length === 0;
   };
 
-  // Envío del formulario por EmailJS
+  // La solicitud se guarda como reserva pendiente y además se avisa por EmailJS
   const submit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -83,6 +84,23 @@ export default function ReservationForm({ room, onClose, user, initialData, regi
         telefono: '', // El teléfono no se pide en este formulario
       };
       await registrarUsuario(userData);
+    }
+
+    // Los usuarios registrados en la demo son simulados y no existen en la base:
+    // su solicitud solo viaja por correo. El resto queda como reserva pendiente.
+    if (!user.datos.simulado) {
+      // La base rechaza fechas superpuestas; el aviso ya se mostró y el formulario queda abierto
+      const guardada = await crearReserva({
+        id_usuario: user.datos.id_usuario,
+        id_habitacion: room.id,
+        fecha_inicio: form.checkin,
+        fecha_fin: form.checkout,
+        estado: 'pendiente',
+      });
+      if (!guardada) {
+        setSubmitting(false);
+        return;
+      }
     }
 
     // Mapeo de variables EXACTAS para EmailJS
@@ -113,8 +131,8 @@ export default function ReservationForm({ room, onClose, user, initialData, regi
 
         CÁLCULO DE PRECIO:
         ----------------------------------------
-        - Precio por Noche: $${room.price.toFixed(2)}
-        - TOTAL ESTIMADO: $${form.total_price.toFixed(2)}
+        - Precio por Noche: ${formatoPrecio(room.price)}
+        - TOTAL ESTIMADO: ${formatoPrecio(form.total_price)}
 
         ========================================
         Por favor, contactar al cliente para confirmar la reserva y procesar el pago.
@@ -128,15 +146,12 @@ export default function ReservationForm({ room, onClose, user, initialData, regi
         templateParams,
         "cy-3jjDdw9Sr3ZLyU"
       )
-      .then(() => {
+      // El correo es un aviso adicional: la reserva ya quedó registrada aunque falle
+      .catch((error) => console.error("Error al enviar el correo:", error?.text || error))
+      .finally(() => {
+        setSubmitting(false);
         setSubmitted(true);
-        // Se elimina la llamada a addReservation, ya que el cliente solo envía una solicitud.
-      })
-      .catch((error) => {
-        console.error("Error al enviar el correo:", error.text);
-        alert("Hubo un error al enviar la solicitud. Por favor, intente más tarde.");
-      })
-      .finally(() => setSubmitting(false));
+      });
   };
 
   // Pantalla de confirmación
@@ -267,7 +282,7 @@ export default function ReservationForm({ room, onClose, user, initialData, regi
           {form.num_nights > 0 && (
             <div className="alert alert-light text-center">
               Estadía de <strong>{form.num_nights} noches</strong>. Precio Total:{" "}
-              <strong className="text-brand-orange">${form.total_price.toFixed(2)}</strong>
+              <strong className="text-brand-orange">{formatoPrecio(form.total_price)}</strong>
             </div>
           )}
         </div>

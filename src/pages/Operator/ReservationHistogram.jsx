@@ -84,8 +84,8 @@ export default function ReservationHistogram({ reservations }) {
 
   return (
     <>
-      <div className="d-flex justify-content-between mb-3">
-        <div className="btn-group btn-group-sm" role="group">
+      <div className="d-flex flex-wrap justify-content-between gap-2 mb-3">
+        <div className="btn-group btn-group-sm flex-wrap" role="group">
           {['todas', 'confirmada', 'pendiente', 'cancelada', 'finalizada'].map(status => (
             <button
               key={status}

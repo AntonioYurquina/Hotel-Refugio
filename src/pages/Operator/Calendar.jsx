@@ -11,7 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 const locales = { 'es': es };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
-export default function OperatorCalendar({ reservations, onSelectEvent, onSelectSlot }) {
+export default function OperatorCalendar({ reservations, rooms, onSelectEvent, onSelectSlot }) {
   const { theme } = useTheme();
   const [showArchived, setShowArchived] = useState(false);
 
@@ -22,14 +22,18 @@ export default function OperatorCalendar({ reservations, onSelectEvent, onSelect
       ? reservations
       : reservations.filter(res => res.estado === 'confirmada' || res.estado === 'pendiente');
 
-    return filteredReservations.map(res => ({
-      title: `Reserva #${res.id_reserva} - Hab: ${res.id_habitacion}`,
-      start: new Date(res.fecha_inicio),
-      end: new Date(res.fecha_fin),
-      allDay: true,
-      resource: res,
-    }));
-  }, [reservations, showArchived]);
+    const habitaciones = rooms?.datos || [];
+    return filteredReservations.map(res => {
+      const numero = habitaciones.find(h => h.id_habitacion === res.id_habitacion)?.numero ?? res.id_habitacion;
+      return {
+        title: `Reserva #${res.id_reserva} - Hab. ${numero}`,
+        start: new Date(res.fecha_inicio),
+        end: new Date(res.fecha_fin),
+        allDay: true,
+        resource: res,
+      };
+    });
+  }, [reservations, rooms, showArchived]);
 
   const eventStyleGetter = (event) => {
     const status = event.resource.estado;
@@ -65,6 +69,7 @@ export default function OperatorCalendar({ reservations, onSelectEvent, onSelect
       <div style={{ height: '600px' }} className="calendar-container">
         <Calendar
           localizer={localizer}
+          culture="es"
           events={events}
           startAccessor="start"
           endAccessor="end"
@@ -81,6 +86,11 @@ export default function OperatorCalendar({ reservations, onSelectEvent, onSelect
             day: "Día",
             agenda: "Agenda",
             noEventsInRange: "No hay reservas en este rango.",
+            date: "Fecha",
+            time: "Hora",
+            event: "Reserva",
+            allDay: "Todo el día",
+            showMore: (total) => `+${total} más`,
           }}
         />
       </div>

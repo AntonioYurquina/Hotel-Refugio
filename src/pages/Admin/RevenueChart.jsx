@@ -15,8 +15,9 @@ export default function RevenueChart({ reservations, rooms }) {
     const monthlyRevenue = Array(12).fill(0);
 
     reservations.forEach(res => {
-      const creationDate = new Date(res.fecha_creacion);
-      const year = creationDate.getFullYear();
+      // El ingreso se registra en el mes en que termina la estadía
+      const checkoutDate = new Date(res.fecha_fin);
+      const year = checkoutDate.getFullYear();
       yearSet.add(year);
 
       if (year === selectedYear && res.estado === 'finalizada') {
@@ -26,7 +27,7 @@ export default function RevenueChart({ reservations, rooms }) {
         const nights = differenceInDays(new Date(res.fecha_fin), new Date(res.fecha_inicio));
         const revenue = nights > 0 ? nights * parseFloat(room.precio_noche) : 0;
         
-        const month = creationDate.getMonth();
+        const month = checkoutDate.getMonth();
         monthlyRevenue[month] += revenue;
       }
     });

@@ -1,0 +1,28 @@
+# Base local que imita a Supabase: PostgreSQL + PostgREST.
+# Uso: docker compose -f supabase/local/docker-compose.yml up -d
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: local
+    ports:
+      - "54322:5432"
+    volumes:
+      - ./00-roles.sql:/docker-entrypoint-initdb.d/00-roles.sql:ro
+      - ../schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./02-datos.sql:/docker-entrypoint-initdb.d/02-datos.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 2s
+      retries: 30
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:local@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+    ports:
+      - "54321:3000"

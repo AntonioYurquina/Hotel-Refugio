@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import CuentasDemo from './CuentasDemo';
 
 export default function AuthInModal({ login, actualizarCredenciales, registrarUsuario }) {
   const [isLoginView, setIsLoginView] = useState(true);
@@ -10,8 +11,8 @@ export default function AuthInModal({ login, actualizarCredenciales, registrarUs
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    await actualizarCredenciales(formData.email, formData.contraseña);
-    await login();
+    actualizarCredenciales(formData.email, formData.contraseña);
+    await login(formData.email, formData.contraseña);
   };
 
   const handleRegister = async (e) => {
@@ -44,15 +45,21 @@ export default function AuthInModal({ login, actualizarCredenciales, registrarUs
         )}
         <div className="mb-3">
           <label className="form-label">Email</label>
-          <input type="email" name="email" className="form-control" required onChange={handleInputChange} />
+          <input type="email" name="email" className="form-control" required value={formData.email} onChange={handleInputChange} />
         </div>
         <div className="mb-3">
           <label className="form-label">Contraseña</label>
-          <input type="password" name="contraseña" className="form-control" required onChange={handleInputChange} />
+          <input type="password" name="contraseña" className="form-control" required value={formData.contraseña} onChange={handleInputChange} />
         </div>
         <button type="submit" className="btn btn-primary w-100">
           {isLoginView ? 'Acceder' : 'Registrarse'}
         </button>
+        {isLoginView && (
+          <CuentasDemo
+            roles={['Cliente']}
+            onElegir={(email, contraseña) => setFormData(prev => ({ ...prev, email, contraseña }))}
+          />
+        )}
       </form>
 
       <div className="text-center mt-3">
