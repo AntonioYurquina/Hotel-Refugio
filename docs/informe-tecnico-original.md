@@ -1,3 +1,5 @@
+> **Documento histórico.** Es el informe de la entrega original de la cursada. La API REST externa que describe (`robledo.website`) y el servicio de imágenes ya no existen: el sistema ahora usa su propia base de datos PostgreSQL y sus propias fotos. La arquitectura vigente está en el [README](../README.md).
+
 # Informe Técnico Detallado
 ## Sistema de Gestión Hotelera "Hotel Refugio"
 ### Lenguajes IV - Trabajo Práctico Integrador

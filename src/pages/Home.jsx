@@ -3,6 +3,7 @@ import Hero from '../components/Hero';
 import RoomCarousel from '../components/RoomCarousel'; // Importar el nuevo carrusel
 import LocationMap from '../components/LocationMap';
 import Testimonials from '../components/Testimonials';
+import { fotosHabitacion } from '../api/imagenes';
 
 export default function Home({ habitaciones, user }) {
   const adaptedRooms = habitaciones ? habitaciones.map(h => ({
@@ -11,11 +12,7 @@ export default function Home({ habitaciones, user }) {
     price: parseFloat(h.precio_noche),
     capacity: parseInt(h.capacidad, 10),
     description: h.descripcion,
-    images: [
-      `https://robledo.website/patas/${h.id_habitacion}a.jpg`,
-      `https://robledo.website/patas/${h.id_habitacion}b.jpg`,
-      `https://robledo.website/patas/${h.id_habitacion}c.jpg`,
-    ]
+    images: fotosHabitacion(h)
   })) : [];
 
   return (

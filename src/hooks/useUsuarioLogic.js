@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../context/ToastContext";
+import * as api from "../api/hotelApi";
 
 export function useUsuarioLogic() {
   const { addToast } = useToast();
-  
+
   // --- ESTADOS PRINCIPALES ---
   const [usuario, setUsuario] = useState(() => {
     try {
@@ -30,20 +31,11 @@ export function useUsuarioLogic() {
   async function login() {
     if (!credenciales.email || !credenciales.contraseña) return;
     try {
-      const response = await fetch("https://robledo.website/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credenciales)
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setUsuario(data);
-        addToast(`Bienvenido, ${data.datos.nombre}`, 'success');
-      } else {
-        addToast('Credenciales incorrectas', 'error');
-      }
+      const data = await api.login(credenciales.email, credenciales.contraseña);
+      setUsuario(data);
+      addToast(`Bienvenido, ${data.datos.nombre}`, 'success');
     } catch (error) {
-      addToast('Error de conexión', 'error');
+      addToast(error.status === 401 ? 'Credenciales incorrectas' : error.message, 'error');
     }
   }
 
@@ -58,23 +50,16 @@ export function useUsuarioLogic() {
 
   async function descargarUsuarios() {
     try {
-      const response = await fetch("https://robledo.website/usuarios");
-      const data = await response.json();
-      // Corregido: La API de usuarios devuelve un array directamente.
-      // Se verifica que la respuesta sea exitosa y que los datos sean un array.
-      if (response.ok && Array.isArray(data)) {
-        setAllUsers({ ok: true, datos: data });
-      } else {
-        console.error("La respuesta de la API de usuarios no es un array válido.");
-        setAllUsers({ ok: false, datos: [] });
-      }
+      const data = await api.listarUsuarios();
+      setAllUsers({ ok: true, datos: data });
     } catch (error) {
       console.error("Error al descargar usuarios:", error);
+      setAllUsers({ ok: false, datos: [] });
     }
   }
 
-  // Las funciones de gestión de usuarios (registrar, actualizar, eliminar) se mantienen como simulaciones locales
-  // ya que la API proporcionada no incluye estos endpoints.
+  // Registrar, actualizar y eliminar usuarios son simulaciones locales a propósito:
+  // la base de demostración es pública y no debe recibir datos personales reales.
   async function registrarUsuario(userData) {
     const newUser = { id_usuario: Date.now(), ...userData, tipo_usuario: 'cliente' };
     setAllUsers(prev => ({ ...prev, datos: [newUser, ...prev.datos] }));
@@ -98,77 +83,61 @@ export function useUsuarioLogic() {
   // --- LÓGICA DE HABITACIONES ---
   async function cargarHabitaciones() {
     try {
-      const response = await fetch("https://robledo.website/habitaciones");
-      const data = await response.json();
-      if (data.ok) setHabitaciones(data);
+      setHabitaciones(await api.listarHabitaciones());
     } catch (error) {
       console.error("Error al cargar habitaciones:", error);
+      addToast(error.message, 'error');
     }
   }
 
-  async function manejarActualizacion(id_habitacion, nuevo_estado, version) {
+  async function manejarActualizacion(id_habitacion, nuevo_estado) {
     try {
-      const response = await fetch(`https://robledo.website/habitaciones/${id_habitacion}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nuevo_estado, version })
-      });
-      if (response.ok) await cargarHabitaciones();
+      await api.cambiarEstadoHabitacion(id_habitacion, nuevo_estado);
+      await cargarHabitaciones();
     } catch (error) {
       console.error("Error al actualizar habitación:", error);
+      addToast(error.message, 'error');
     }
   }
 
   async function actualizarHabitacionAdmin(roomData) {
-    setHabitaciones(prev => ({
-      ...prev,
-      datos: prev.datos.map(h => h.id_habitacion === roomData.id_habitacion ? { ...h, ...roomData } : h)
-    }));
-    addToast(`Habitación ${roomData.numero} actualizada (simulado).`, 'success');
+    try {
+      await api.actualizarHabitacion(roomData.id_habitacion, roomData);
+      await cargarHabitaciones();
+      addToast(`Habitación ${roomData.numero} actualizada.`, 'success');
+    } catch (error) {
+      console.error("Error al actualizar la habitación:", error);
+      addToast(error.message, 'error');
+    }
   }
 
   async function crearHabitacion(roomData) {
     try {
-      const response = await fetch("https://robledo.website/habitaciones", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...roomData, version: habitaciones.estado_tabla }),
-      });
-      if (response.ok) {
-        cargarHabitaciones();
-        // Aquí iría un toast de éxito
-      } else {
-        // Aquí iría un toast de error
-      }
+      await api.crearHabitacion(roomData);
+      await cargarHabitaciones();
+      addToast(`Habitación ${roomData.numero} creada.`, 'success');
     } catch (error) {
       console.error("Error al crear la habitación:", error);
+      addToast(error.message, 'error');
     }
   }
 
   async function eliminarHabitacion(roomId) {
     try {
-      const response = await fetch(`https://robledo.website/habitaciones/${roomId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version: habitaciones.estado_tabla }),
-      });
-      if (response.ok) {
-        cargarHabitaciones();
-        // Aquí iría un toast de éxito
-      } else {
-        // Aquí iría un toast de error
-      }
+      await api.eliminarHabitacion(roomId);
+      // Las reservas de la habitación se borran en cascada: se recargan las dos listas.
+      await Promise.all([cargarHabitaciones(), descargarReservas()]);
+      addToast('Habitación eliminada.', 'success');
     } catch (error) {
       console.error("Error al eliminar la habitación:", error);
+      addToast(error.message, 'error');
     }
   }
 
   // --- LÓGICA DE RESERVAS ---
   async function descargarReservas() {
     try {
-      const response = await fetch("https://robledo.website/reservas");
-      const data = await response.json();
-      if (data.ok) setReservas(data);
+      setReservas(await api.listarReservas());
     } catch (error) {
       console.error("Error al descargar reservas:", error);
     }
@@ -176,92 +145,62 @@ export function useUsuarioLogic() {
 
   async function crearReserva(reservaData) {
     try {
-      const body = { ...reservaData, version: reservas.estado_tabla };
-      const response = await fetch("https://robledo.website/reservas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-      const nuevaReserva = await response.json();
-
-      if (response.ok) {
-        setReservas(prev => ({
-          ...prev,
-          datos: [...prev.datos, nuevaReserva.datos],
-          estado_tabla: nuevaReserva.estado_tabla
-        }));
-        alert('Reserva creada con éxito.');
-      } else {
-        alert(`Error al crear la reserva: ${nuevaReserva.mensaje}`);
-      }
+      const nuevaReserva = await api.crearReserva(reservaData);
+      setReservas(prev => ({
+        ...prev,
+        datos: [...prev.datos, nuevaReserva.datos],
+        estado_tabla: nuevaReserva.estado_tabla
+      }));
+      addToast('Reserva creada con éxito.', 'success');
     } catch (error) {
-      console.error("Error de red al crear reserva:", error);
+      console.error("Error al crear reserva:", error);
+      addToast(`Error al crear la reserva: ${error.message}`, 'error');
     }
   }
 
   async function actualizarReserva(reservaData) {
+    const { id_reserva, ...dataToUpdate } = reservaData;
     try {
-      const { id_reserva, ...dataToUpdate } = reservaData;
-      const body = { ...dataToUpdate, version: reservas.estado_tabla };
-      
       // Actualización optimista del UI
       setReservas(prev => ({
         ...prev,
-        datos: prev.datos.map(r => r.id_reserva === id_reserva ? { ...r, ...reservaData } : r)
+        datos: prev.datos.map(r => r.id_reserva === id_reserva ? {
+          ...r,
+          ...reservaData,
+          fecha_inicio: api.fechaLocal(reservaData.fecha_inicio ?? r.fecha_inicio),
+          fecha_fin: api.fechaLocal(reservaData.fecha_fin ?? r.fecha_fin),
+        } : r)
       }));
 
-      const response = await fetch(`https://robledo.website/reservas/${id_reserva}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        addToast('Reserva actualizada con éxito.', 'success');
-        // Opcional: recargar para sincronizar el estado de la tabla si es necesario
-        const data = await response.json();
-        setReservas(prev => ({ ...prev, estado_tabla: data.estado_tabla }));
-      } else {
-        const errorData = await response.json();
-        addToast(`Error al actualizar la reserva: ${errorData.mensaje}`, 'error');
-        descargarReservas(); // Revertir el cambio optimista si hay un error
-      }
+      const data = await api.actualizarReserva(id_reserva, dataToUpdate);
+      addToast('Reserva actualizada con éxito.', 'success');
+      setReservas(prev => ({ ...prev, estado_tabla: data.estado_tabla }));
     } catch (error) {
-      console.error("Error de red al actualizar reserva:", error);
+      console.error("Error al actualizar reserva:", error);
+      addToast(`Error al actualizar la reserva: ${error.message}`, 'error');
       descargarReservas(); // Revertir el cambio optimista si hay un error
     }
   }
 
   async function eliminarReserva(idReserva) {
+    // Actualización optimista del UI
+    const reservaOriginal = reservas.datos.find(r => r.id_reserva === idReserva);
+    setReservas(prev => ({
+      ...prev,
+      datos: prev.datos.filter(r => r.id_reserva !== idReserva)
+    }));
+
     try {
-      // Actualización optimista del UI
-      const reservaOriginal = reservas.datos.find(r => r.id_reserva === idReserva);
-      setReservas(prev => ({
-        ...prev,
-        datos: prev.datos.filter(r => r.id_reserva !== idReserva)
-      }));
-
-      const response = await fetch(`https://robledo.website/reservas/${idReserva}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version: reservas.estado_tabla }),
-      });
-
-      if (response.ok) {
-        alert('Reserva eliminada con éxito.');
-        const data = await response.json();
-        setReservas(prev => ({ ...prev, estado_tabla: data.estado_tabla }));
-      } else {
-        const errorData = await response.json();
-        alert(`Error al eliminar la reserva: ${errorData.mensaje}`);
-        // Revertir el cambio optimista si hay un error
-        if (reservaOriginal) {
-          setReservas(prev => ({ ...prev, datos: [...prev.datos, reservaOriginal] }));
-        }
-      }
+      const data = await api.eliminarReserva(idReserva);
+      addToast('Reserva eliminada con éxito.', 'success');
+      setReservas(prev => ({ ...prev, estado_tabla: data.estado_tabla }));
     } catch (error) {
-      console.error("Error de red al eliminar reserva:", error);
-      descargarReservas(); // Revertir
+      console.error("Error al eliminar reserva:", error);
+      addToast(`Error al eliminar la reserva: ${error.message}`, 'error');
+      // Revertir el cambio optimista
+      if (reservaOriginal) {
+        setReservas(prev => ({ ...prev, datos: [...prev.datos, reservaOriginal] }));
+      }
     }
   }
 
@@ -289,8 +228,7 @@ export function useUsuarioLogic() {
     registrarUsuario,
     actualizarHabitacionAdmin,
     actualizarUsuario,
-    actualizarReserva,
-    crearHabitacion, // Exportar nueva función
-    eliminarHabitacion, // Exportar nueva función
+    crearHabitacion,
+    eliminarHabitacion,
   };
 }

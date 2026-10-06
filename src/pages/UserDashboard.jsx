@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import RoomCard from '../components/RoomCard';
+import { fotosHabitacion, normalizar } from '../api/imagenes';
 
 const getStatusBadge = (status) => {
   switch (status) {
@@ -63,7 +64,7 @@ export default function UserDashboard({ user, allReservations, habitaciones }) {
     const recommendations = [];
 
     roomTypes.forEach(type => {
-      const found = availableRooms.find(r => r.tipo === type && !recommendations.some(rec => rec.id === r.id_habitacion));
+      const found = availableRooms.find(r => normalizar(r.tipo) === type && !recommendations.some(rec => rec.id === r.id_habitacion));
       if (found) {
         recommendations.push({
           id: found.id_habitacion,
@@ -71,7 +72,7 @@ export default function UserDashboard({ user, allReservations, habitaciones }) {
           price: parseFloat(found.precio_noche),
           capacity: parseInt(found.capacidad, 10),
           description: found.descripcion,
-          images: [`https://robledo.website/patas/${found.id_habitacion}a.jpg`]
+          images: fotosHabitacion(found)
         });
       }
     });
