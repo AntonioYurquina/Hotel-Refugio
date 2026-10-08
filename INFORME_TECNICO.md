@@ -274,7 +274,9 @@ Aunque el proyecto usa JavaScript, se incluyen definiciones de tipos para mejor 
 
 ### 3.1 API RESTful
 
-El backend está implementado como una **API REST** alojada en el dominio `https://robledo.website/`
+El backend está implementado como una **API REST** alojada en el dominio `https://api.hotel-refugio.example/`
+
+> Nota: el servidor original ya no está en línea y su dominio se reemplazó por uno genérico en este informe. La demo pública usa una API simulada en memoria (ver `README.md`).
 
 **Características de la API:**
 - Arquitectura RESTful
@@ -456,7 +458,7 @@ El sistema implementa **concurrencia optimista** mediante el campo `estado_tabla
 
 ### 3.4 Gestión de Imágenes
 
-**Sistema de almacenamiento:** CDN estático en `https://robledo.website/patas/`
+**Sistema de almacenamiento:** CDN estático en `https://api.hotel-refugio.example/patas/`
 
 **Nomenclatura:**
 ```
@@ -468,9 +470,9 @@ El sistema implementa **concurrencia optimista** mediante el campo `estado_tabla
 **Ejemplo:**
 ```javascript
 const images = [
-  `https://robledo.website/patas/${habitacion.id_habitacion}a.jpg`,
-  `https://robledo.website/patas/${habitacion.id_habitacion}b.jpg`,
-  `https://robledo.website/patas/${habitacion.id_habitacion}c.jpg`
+  `https://api.hotel-refugio.example/patas/${habitacion.id_habitacion}a.jpg`,
+  `https://api.hotel-refugio.example/patas/${habitacion.id_habitacion}b.jpg`,
+  `https://api.hotel-refugio.example/patas/${habitacion.id_habitacion}c.jpg`
 ];
 ```
 
@@ -588,7 +590,7 @@ habitaciones (1) -----> (N) reservas
 
 ### 5.1 API Backend Propia (RESTful)
 
-**URL Base:** `https://robledo.website/`
+**URL Base:** `https://api.hotel-refugio.example/`
 
 **Autenticación:** Sin tokens JWT (autenticación simple por sesión)
 
@@ -778,7 +780,7 @@ emailjs.sendForm(
 │  API         API                 API          API           │
 │  │                                                           │
 ├──┼───────────────────────────────────────────────────────────┤
-│  │            BACKEND (robledo.website)                     │
+│  │            BACKEND (api.hotel-refugio.example)            │
 ├──┼───────────────────────────────────────────────────────────┤
 │  │                                                           │
 │  │  ┌──────────────┐          ┌──────────────┐             │
@@ -801,7 +803,7 @@ emailjs.sendForm(
 │  │               CAPA DE DATOS                              │
 ├──┼───────────────────────────────────────────────────────────┤
 │  │                                                           │
-│  └──► Imágenes CDN (robledo.website/patas/)                 │
+│  └──► Imágenes CDN (api.hotel-refugio.example/patas/)         │
 │                                                               │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -939,7 +941,7 @@ src/pages/Admin/
 ```javascript
 // useUsuarioLogic.js
 async function login() {
-  const response = await fetch("https://robledo.website/login", {
+  const response = await fetch("https://api.hotel-refugio.example/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credenciales)
@@ -1222,8 +1224,8 @@ app.use(cors({
 ```javascript
 // Detección automática
 const API_BASE = import.meta.env.PROD 
-  ? 'https://robledo.website'
-  : 'https://robledo.website';  // Misma API para ambos
+  ? 'https://api.hotel-refugio.example'
+  : 'https://api.hotel-refugio.example';  // Misma API para ambos
 ```
 
 ### 8.5 Monitoreo y Logs
@@ -1292,7 +1294,7 @@ console.error('Error al cargar habitaciones:', error);
 - Vite 5 (build tool)
 
 **Backend:**
-- API RESTful (robledo.website)
+- API RESTful (api.hotel-refugio.example)
 - Base de datos SQL (inferida)
 - Control de versiones (estado_tabla)
 
