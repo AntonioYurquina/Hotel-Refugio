@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import RoomList from '../components/RoomList';
 import heroImage from '../components/image.png';
+import { imagenHabitacion } from '../config';
 
 export default function Reserve({ habitaciones, user, reservas, login, actualizarCredenciales, registrarUsuario }) {
   const [filters, setFilters] = useState({
@@ -18,9 +19,9 @@ export default function Reserve({ habitaciones, user, reservas, login, actualiza
     open: h.estado === 'disponible',
     amenities: ['WiFi', 'TV', 'Servicio a la habitación'],
     images: [
-      `https://robledo.website/patas/${h.id_habitacion}a.jpg`,
-      `https://robledo.website/patas/${h.id_habitacion}b.jpg`,
-      `https://robledo.website/patas/${h.id_habitacion}c.jpg`,
+      imagenHabitacion(h.id_habitacion, 0),
+      imagenHabitacion(h.id_habitacion, 1),
+      imagenHabitacion(h.id_habitacion, 2),
     ]
   })) : [], [habitaciones]);
 

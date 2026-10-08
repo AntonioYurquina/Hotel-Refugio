@@ -23,15 +23,7 @@ const Toast = ({ message, type, onClose }) => {
 };
 
 export default function Layout({ user, logout, children }) {
-  const { toasts } = useToast(); // No existe, esto es un placeholder. La lógica de estado está en el provider.
-
-  // Este componente necesita una forma de acceder a los toasts.
-  // La forma más simple es que el ToastProvider también provea el estado de los toasts.
-  // Voy a asumir que el ToastContext provee `toasts` y `removeToast`.
-  
-  // La implementación correcta requiere modificar ToastContext para que exponga `toasts`
-  // y una función para eliminarlos. Por simplicidad, este es un ejemplo conceptual.
-  // La lógica real sería más compleja.
+  const { toasts, removeToast } = useToast();
 
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -41,7 +33,11 @@ export default function Layout({ user, logout, children }) {
       </main>
       <Footer />
       <ScrollToTopButton />
-      {/* Aquí iría el contenedor de Toasts */}
+      <div className="toast-container position-fixed top-0 end-0 p-3" style={{ zIndex: 1100 }}>
+        {toasts.map(t => (
+          <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />
+        ))}
+      </div>
     </div>
   );
 }

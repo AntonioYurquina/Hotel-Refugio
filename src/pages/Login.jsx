@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
 import RegisterForm from './RegisterForm';
+import { DEMO } from '../config';
+import { CLAVE_DEMO } from '../demo/datos';
+
+const CUENTAS_DEMO = [
+  { rol: 'Cliente', email: 'cliente@example.com' },
+  { rol: 'Operador', email: 'operador@example.com' },
+  { rol: 'Administrador', email: 'admin@example.com' },
+];
 
 export default function Login({ credenciales, actualizarCredenciales, handleLogin, registrarUsuario }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -58,6 +66,25 @@ export default function Login({ credenciales, actualizarCredenciales, handleLogi
                 ¿No tienes una cuenta? <button type="button" className="btn btn-link p-0" onClick={() => setIsRegistering(true)}>Regístrate aquí</button>
               </p>
             </form>
+          )}
+          {DEMO && !isRegistering && (
+            <div className="border rounded p-3 mt-4 bg-body-tertiary">
+              <p className="small text-muted mb-2">
+                Demo con datos ficticios, sin servidor. Entrá con un clic o usá cualquiera de estas cuentas con la contraseña <code>{CLAVE_DEMO}</code>.
+              </p>
+              <div className="d-flex flex-wrap gap-2">
+                {CUENTAS_DEMO.map(({ rol, email }) => (
+                  <button
+                    key={email}
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => handleLogin({ email, contraseña: CLAVE_DEMO })}
+                  >
+                    Entrar como {rol.toLowerCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>

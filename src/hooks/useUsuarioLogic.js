@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../context/ToastContext";
+import { API_URL } from "../config";
 
 export function useUsuarioLogic() {
   const { addToast } = useToast();
@@ -27,13 +28,13 @@ export function useUsuarioLogic() {
   }, [usuario]);
 
   // --- LÓGICA DE AUTENTICACIÓN Y USUARIOS ---
-  async function login() {
-    if (!credenciales.email || !credenciales.contraseña) return;
+  async function login(datos = credenciales) {
+    if (!datos.email || !datos.contraseña) return;
     try {
-      const response = await fetch("https://robledo.website/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credenciales)
+        body: JSON.stringify(datos)
       });
       const data = await response.json();
       if (response.ok) {
@@ -58,7 +59,7 @@ export function useUsuarioLogic() {
 
   async function descargarUsuarios() {
     try {
-      const response = await fetch("https://robledo.website/usuarios");
+      const response = await fetch(`${API_URL}/usuarios`);
       const data = await response.json();
       // Corregido: La API de usuarios devuelve un array directamente.
       // Se verifica que la respuesta sea exitosa y que los datos sean un array.
@@ -98,7 +99,7 @@ export function useUsuarioLogic() {
   // --- LÓGICA DE HABITACIONES ---
   async function cargarHabitaciones() {
     try {
-      const response = await fetch("https://robledo.website/habitaciones");
+      const response = await fetch(`${API_URL}/habitaciones`);
       const data = await response.json();
       if (data.ok) setHabitaciones(data);
     } catch (error) {
@@ -108,7 +109,7 @@ export function useUsuarioLogic() {
 
   async function manejarActualizacion(id_habitacion, nuevo_estado, version) {
     try {
-      const response = await fetch(`https://robledo.website/habitaciones/${id_habitacion}`, {
+      const response = await fetch(`${API_URL}/habitaciones/${id_habitacion}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nuevo_estado, version })
@@ -129,7 +130,7 @@ export function useUsuarioLogic() {
 
   async function crearHabitacion(roomData) {
     try {
-      const response = await fetch("https://robledo.website/habitaciones", {
+      const response = await fetch(`${API_URL}/habitaciones`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...roomData, version: habitaciones.estado_tabla }),
@@ -147,7 +148,7 @@ export function useUsuarioLogic() {
 
   async function eliminarHabitacion(roomId) {
     try {
-      const response = await fetch(`https://robledo.website/habitaciones/${roomId}`, {
+      const response = await fetch(`${API_URL}/habitaciones/${roomId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version: habitaciones.estado_tabla }),
@@ -166,7 +167,7 @@ export function useUsuarioLogic() {
   // --- LÓGICA DE RESERVAS ---
   async function descargarReservas() {
     try {
-      const response = await fetch("https://robledo.website/reservas");
+      const response = await fetch(`${API_URL}/reservas`);
       const data = await response.json();
       if (data.ok) setReservas(data);
     } catch (error) {
@@ -177,7 +178,7 @@ export function useUsuarioLogic() {
   async function crearReserva(reservaData) {
     try {
       const body = { ...reservaData, version: reservas.estado_tabla };
-      const response = await fetch("https://robledo.website/reservas", {
+      const response = await fetch(`${API_URL}/reservas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
@@ -210,7 +211,7 @@ export function useUsuarioLogic() {
         datos: prev.datos.map(r => r.id_reserva === id_reserva ? { ...r, ...reservaData } : r)
       }));
 
-      const response = await fetch(`https://robledo.website/reservas/${id_reserva}`, {
+      const response = await fetch(`${API_URL}/reservas/${id_reserva}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -241,7 +242,7 @@ export function useUsuarioLogic() {
         datos: prev.datos.filter(r => r.id_reserva !== idReserva)
       }));
 
-      const response = await fetch(`https://robledo.website/reservas/${idReserva}`, {
+      const response = await fetch(`${API_URL}/reservas/${idReserva}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version: reservas.estado_tabla }),

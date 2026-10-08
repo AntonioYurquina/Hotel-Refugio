@@ -11,7 +11,7 @@ export default function AuthInModal({ login, actualizarCredenciales, registrarUs
   const handleLogin = async (e) => {
     e.preventDefault();
     await actualizarCredenciales(formData.email, formData.contraseña);
-    await login();
+    await login({ email: formData.email, contraseña: formData.contraseña });
   };
 
   const handleRegister = async (e) => {
