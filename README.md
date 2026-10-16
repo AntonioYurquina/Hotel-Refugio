@@ -10,7 +10,7 @@ Sistema de gestión hotelero (proyecto de la facultad) hecho con React y Vite. T
 
 ## Dos modos de funcionamiento
 
-La aplicación habla con la **API Hotel v1** (contrato en `docs/INFORME_PMBOK.md`, sección 5) y puede correr de dos formas:
+La aplicación habla con la **API Hotel v1** (contrato en `docs/INFORME_PMBOK.md`, sección 3.2) y puede correr de dos formas:
 
 | Modo | Cuándo | Datos |
 | ---- | ------ | ----- |
