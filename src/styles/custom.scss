@@ -18,6 +18,11 @@ $secondary-text: #95A5A6;
 
 // 1. Sobrescribir variables de Bootstrap
 $primary: $orange;
+// Bootstrap calcula $theme-colors al importar las variables, antes de este override: se actualiza a mano para que
+// todos los componentes (botones, enlaces, foco, badges) usen el naranja de la marca y no el azul por defecto.
+$theme-colors: map-merge($theme-colors, ("primary": $orange));
+$link-color: $orange;
+$link-hover-color: darken($orange, 10%);
 $body-bg: #f8f9fa;
 $body-color: #212529;
 
@@ -154,4 +159,22 @@ $body-color: #212529;
     transform: translateY(-5px);
     box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1) !important;
   }
+}
+
+// Fondo de los modales propios (Modal.jsx)
+.modal-fondo {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+// Foco visible en elementos interactivos que no son botones
+.cursor-pointer {
+  cursor: pointer;
+}
+
+// Enlace activo del menú: resaltado sutil en lugar de un bloque relleno
+.navbar .nav-link.active {
+  background: transparent;
+  color: $orange;
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 $orange;
 }

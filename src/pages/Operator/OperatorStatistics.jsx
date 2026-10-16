@@ -1,21 +1,16 @@
 import React, { useMemo } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/themeContext';
 
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
+// Confirmadas, pendientes, canceladas, finalizadas
+const COLORES = ['#27AE60', '#E95420', '#E74C3C', '#95A5A6'];
+
 export default function OperatorStatistics({ reservations }) {
   const { theme } = useTheme();
-
-  const themeColors = {
-    pie: {
-      // Paleta profesional con naranja como acento
-      light: ['#27AE60', '#E95420', '#E74C3C', '#95A5A6'],
-      dark: ['#27AE60', '#E95420', '#E74C3C', '#95A5A6'],
-    },
-    text: theme === 'light' ? '#495057' : '#dee2e6',
-  };
+  const colorTexto = theme === 'light' ? '#495057' : '#dee2e6';
 
   const reservationStatusData = useMemo(() => {
     const statusCounts = reservations.reduce((acc, res) => {
@@ -31,7 +26,7 @@ export default function OperatorStatistics({ reservations }) {
           statusCounts['cancelada'] || 0,
           statusCounts['finalizada'] || 0
         ],
-        backgroundColor: themeColors.pie[theme],
+        backgroundColor: COLORES,
         borderColor: theme === 'light' ? '#fff' : '#300A24',
         borderWidth: 2,
       }],
@@ -45,8 +40,8 @@ export default function OperatorStatistics({ reservations }) {
           <Pie data={reservationStatusData} options={{
             responsive: true,
             plugins: {
-              legend: { position: 'top', labels: { color: themeColors.text } },
-              title: { display: true, text: 'Distribución de Estados', color: themeColors.text, font: { size: 16 } },
+              legend: { position: 'top', labels: { color: colorTexto } },
+              title: { display: true, text: 'Distribución de Estados', color: colorTexto, font: { size: 16 } },
             }
           }} />
         </div>

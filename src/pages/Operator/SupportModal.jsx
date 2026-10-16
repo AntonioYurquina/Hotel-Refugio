@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import emailjs from 'emailjs-com';
+import { useToast } from '../../context/toastContext';
 
 export default function SupportModal({ user, onCancel }) {
   const [formData, setFormData] = useState({ subject: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { addToast } = useToast();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,10 +32,10 @@ export default function SupportModal({ user, onCancel }) {
 
     emailjs.send("service_r4nbki4", "template_0q6td97", templateParams, "cy-3jjDdw9Sr3ZLyU")
       .then(() => {
-        alert('Mensaje de soporte enviado con éxito.');
+        addToast('Mensaje de soporte enviado con éxito.', 'success');
         onCancel();
       }, (error) => {
-        alert('Hubo un error al enviar el mensaje.');
+        addToast('Hubo un error al enviar el mensaje. Intentá de nuevo más tarde.', 'error');
         console.error(error);
       })
       .finally(() => setIsSubmitting(false));
@@ -42,14 +44,14 @@ export default function SupportModal({ user, onCancel }) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-3">
-        <label className="form-label">Asunto</label>
-        <input type="text" name="subject" className="form-control" value={formData.subject} onChange={handleChange} required />
+        <label htmlFor="soporte-asunto" className="form-label">Asunto</label>
+        <input id="soporte-asunto" type="text" name="subject" className="form-control" value={formData.subject} onChange={handleChange} required />
       </div>
       <div className="mb-3">
-        <label className="form-label">Describe tu problema</label>
-        <textarea name="message" className="form-control" rows="5" value={formData.message} onChange={handleChange} required></textarea>
+        <label htmlFor="soporte-mensaje" className="form-label">Describí tu problema</label>
+        <textarea id="soporte-mensaje" name="message" className="form-control" rows="5" value={formData.message} onChange={handleChange} required></textarea>
       </div>
-      <div className="modal-footer mt-4 px-0">
+      <div className="d-flex justify-content-end gap-2 mt-4">
         <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancelar</button>
         <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
           {isSubmitting ? 'Enviando...' : 'Enviar a Soporte'}

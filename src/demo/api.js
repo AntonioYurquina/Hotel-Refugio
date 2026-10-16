@@ -1,88 +1,172 @@
 import { API_URL } from '../config';
 import { CLAVE_DEMO, crearDatosDemo } from './datos';
 
+// API simulada en memoria con el mismo contrato que la API Hotel v1: formato { ok, estado_tabla, datos },
+// control de concurrencia por versión (409), enums, códigos HTTP y fechas ISO. Como la API real, no valida
+// solapamientos ni que la salida sea posterior a la entrada: eso lo hace el frontend.
+
+const ESTADOS_HABITACION = ['disponible', 'ocupada', 'mantenimiento', 'cerrada'];
+const ESTADOS_RESERVA = ['pendiente', 'confirmada', 'cancelada', 'finalizada'];
+const ROLES = ['cliente', 'operador', 'admin'];
+
 const respuesta = (cuerpo, status = 200) =>
   new Response(JSON.stringify(cuerpo), { status, headers: { 'Content-Type': 'application/json' } });
+const error = (mensaje, status, extra = {}) => respuesta({ ok: false, error: mensaje, ...extra }, status);
 
-const solapan = (a, b) => a.fecha_inicio < b.fecha_fin && a.fecha_fin > b.fecha_inicio;
+const aISO = (aaaammdd) => `${aaaammdd}T03:00:00.000Z`;
+const esFecha = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+const falta = (...valores) => valores.some((v) => v === undefined || v === null || v === '');
+
+export function crearServidorDemo() {
+  const db = crearDatosDemo();
+  const claves = new Map(db.usuarios.map((u) => [u.id_usuario, CLAVE_DEMO]));
+  let proximaReserva = Math.max(...db.reservas.map((r) => r.id_reserva)) + 1;
+  let proximaHabitacion = Math.max(...db.habitaciones.map((h) => h.id_habitacion)) + 1;
+  let proximoUsuario = Math.max(...db.usuarios.map((u) => u.id_usuario)) + 1;
+
+  const ordenadas = () => [...db.habitaciones].sort((a, b) => a.numero - b.numero);
+  const conflicto = (nombreTabla, version) =>
+    error(`Datos desactualizados. La tabla ${nombreTabla} cambió.`, 409, { estado_tabla: version });
+  const exito = (version, datos) => respuesta({ ok: true, estado_tabla: version, datos });
+
+  function habitaciones(metodo, id, cuerpo) {
+    if (id === null) {
+      if (metodo === 'GET') return exito(db.version.habitaciones, ordenadas());
+      if (metodo === 'POST') {
+        const { numero, tipo, capacidad, precio_noche, estado, descripcion = '' } = cuerpo;
+        if (falta(numero, tipo, capacidad, precio_noche, estado)) return error('Faltan datos obligatorios', 400);
+        if (!ESTADOS_HABITACION.includes(estado) || String(tipo).length > 20) return error('Valor inválido para la habitación', 500);
+        if (db.habitaciones.some((h) => h.numero === Number(numero))) return error('El número de habitación ya existe', 500);
+        const nueva = {
+          id_habitacion: proximaHabitacion++, numero: Number(numero), tipo, capacidad: Number(capacidad),
+          precio_noche: Number(precio_noche).toFixed(2), estado, descripcion,
+        };
+        db.habitaciones.push(nueva);
+        return exito(++db.version.habitaciones, nueva);
+      }
+    } else if (metodo === 'PUT') {
+      const { nuevo_estado, version } = cuerpo;
+      if (falta(nuevo_estado, version)) return error('Faltan datos obligatorios', 400);
+      const habitacion = db.habitaciones.find((h) => h.id_habitacion === id);
+      if (!habitacion) return error('Habitación no encontrada', 404);
+      if (version !== db.version.habitaciones) return conflicto('Habitacion', db.version.habitaciones);
+      if (!ESTADOS_HABITACION.includes(nuevo_estado)) return error('Estado de habitación inválido', 500);
+      habitacion.estado = nuevo_estado;
+      return exito(++db.version.habitaciones, habitacion);
+    }
+    return error('Ruta inexistente', 404);
+  }
+
+  function reservas(metodo, id, cuerpo) {
+    const campos = ['id_usuario', 'id_habitacion', 'fecha_inicio', 'fecha_fin', 'estado'];
+    const validar = () => {
+      if (!ESTADOS_RESERVA.includes(cuerpo.estado)) return 'Estado de reserva inválido';
+      if (!esFecha(cuerpo.fecha_inicio) || !esFecha(cuerpo.fecha_fin)) return 'Fecha inválida';
+      if (!db.usuarios.some((u) => u.id_usuario === cuerpo.id_usuario)) return 'El usuario no existe';
+      if (!db.habitaciones.some((h) => h.id_habitacion === cuerpo.id_habitacion)) return 'La habitación no existe';
+      return null;
+    };
+
+    if (id === null) {
+      if (metodo === 'GET') return exito(db.version.reservas, [...db.reservas].sort((a, b) => a.id_reserva - b.id_reserva));
+      if (metodo === 'POST') {
+        if (falta(...campos.map((c) => cuerpo[c]), cuerpo.version)) return error('Faltan datos obligatorios', 400);
+        if (cuerpo.version !== db.version.reservas) return conflicto('Reserva', db.version.reservas);
+        const invalido = validar();
+        if (invalido) return error(invalido, 500);
+        const nueva = {
+          id_reserva: proximaReserva++, id_usuario: cuerpo.id_usuario, id_habitacion: cuerpo.id_habitacion,
+          fecha_inicio: aISO(cuerpo.fecha_inicio), fecha_fin: aISO(cuerpo.fecha_fin), estado: cuerpo.estado,
+          fecha_creacion: new Date().toISOString(),
+        };
+        db.reservas.push(nueva);
+        return exito(++db.version.reservas, nueva);
+      }
+      return error('Ruta inexistente', 404);
+    }
+
+    const reserva = db.reservas.find((r) => r.id_reserva === id);
+    if (metodo === 'PUT') {
+      if (falta(cuerpo.version)) return error('Faltan datos obligatorios', 400);
+      if (!reserva) return error('Reserva no encontrada', 404);
+      if (cuerpo.version !== db.version.reservas) return conflicto('Reserva', db.version.reservas);
+      if (campos.some((c) => cuerpo[c] === undefined)) return error('null value in column violates not-null constraint', 500);
+      const invalido = validar();
+      if (invalido) return error(invalido, 500);
+      Object.assign(reserva, {
+        id_usuario: cuerpo.id_usuario, id_habitacion: cuerpo.id_habitacion, estado: cuerpo.estado,
+        fecha_inicio: aISO(cuerpo.fecha_inicio), fecha_fin: aISO(cuerpo.fecha_fin),
+      });
+      return exito(++db.version.reservas, reserva);
+    }
+    if (metodo === 'DELETE') {
+      if (falta(cuerpo.version)) return error('Faltan datos obligatorios', 400);
+      if (!reserva) return error('Reserva no encontrada', 404);
+      if (cuerpo.version !== db.version.reservas) return conflicto('Reserva', db.version.reservas);
+      db.reservas = db.reservas.filter((r) => r.id_reserva !== id);
+      return exito(++db.version.reservas, reserva);
+    }
+    return error('Ruta inexistente', 404);
+  }
+
+  function usuarios(metodo, ruta, cuerpo) {
+    if (ruta === '/login' && metodo === 'POST') {
+      if (falta(cuerpo.email, cuerpo['contraseña'])) return error('Faltan email o contraseña', 400);
+      const usuario = db.usuarios.find((u) => u.email.toLowerCase() === String(cuerpo.email).trim().toLowerCase());
+      if (!usuario) return error('Usuario no encontrado', 401);
+      if (claves.get(usuario.id_usuario) !== cuerpo['contraseña']) return error('Contraseña incorrecta', 401);
+      return exito(1, usuario);
+    }
+    if (ruta === '/registrar' && metodo === 'POST') {
+      const { nombre, apellido, email, tipo_usuario, telefono = null } = cuerpo;
+      if (falta(nombre, apellido, email, cuerpo['contraseña'], tipo_usuario)) return respuesta({ error: 'Faltan datos obligatorios' }, 400);
+      const repetido = db.usuarios.some((u) => u.email.toLowerCase() === String(email).trim().toLowerCase());
+      if (repetido || !ROLES.includes(tipo_usuario)) return respuesta({ error: 'Error al registrar usuario' }, 500);
+      const usuario = { id_usuario: proximoUsuario++, nombre, apellido, email, telefono, tipo_usuario };
+      db.usuarios.push(usuario);
+      claves.set(usuario.id_usuario, cuerpo['contraseña']);
+      return respuesta({ mensaje: 'Usuario registrado exitosamente', id_usuario: usuario.id_usuario });
+    }
+    // Extensión del modo demo: la API real expone esta ruta solo para tests (y con las contraseñas).
+    if (ruta === '/usuarios' && metodo === 'GET') return respuesta(db.usuarios);
+    return null;
+  }
+
+  async function manejar(metodo, ruta, cuerpo = {}) {
+    const delUsuario = usuarios(metodo, ruta, cuerpo);
+    if (delUsuario) return delUsuario;
+    const hab = ruta.match(/^\/habitaciones(?:\/(\d+))?$/);
+    if (hab) return habitaciones(metodo, hab[1] ? Number(hab[1]) : null, cuerpo);
+    const res = ruta.match(/^\/reservas(?:\/(\d+))?$/);
+    if (res) return reservas(metodo, res[1] ? Number(res[1]) : null, cuerpo);
+    return error('Ruta inexistente', 404);
+  }
+
+  // Imita que otra persona modificó las reservas: la próxima escritura con la versión anterior recibe 409.
+  const simularCambioExterno = () => ++db.version.reservas;
+
+  return { manejar, simularCambioExterno, db };
+}
+
+let servidor = null;
+export const simularCambioExterno = () => servidor?.simularCambioExterno();
 
 export function instalarApiDemo() {
-  const db = crearDatosDemo();
+  servidor = crearServidorDemo();
   const fetchReal = window.fetch.bind(window);
-  let proximaReserva = db.reservas.length + 1;
-  let proximaHabitacion = db.habitaciones.length + 1;
-
-  const tablaHabitaciones = () => ({ ok: true, estado_tabla: db.version.habitaciones, datos: db.habitaciones });
-  const tablaReservas = () => ({ ok: true, estado_tabla: db.version.reservas, datos: db.reservas });
-
-  async function manejar(metodo, ruta, cuerpo) {
-    if (ruta === '/login' && metodo === 'POST') {
-      const usuario = db.usuarios.find((u) => u.email.toLowerCase() === String(cuerpo.email).trim().toLowerCase());
-      if (!usuario || cuerpo['contraseña'] !== CLAVE_DEMO) return respuesta({ ok: false, mensaje: 'Credenciales incorrectas' }, 401);
-      return respuesta({ ok: true, datos: usuario });
-    }
-    if (ruta === '/usuarios' && metodo === 'GET') return respuesta(db.usuarios);
-
-    if (ruta === '/habitaciones') {
-      if (metodo === 'GET') return respuesta(tablaHabitaciones());
-      if (metodo === 'POST') {
-        const { version, ...datos } = cuerpo;
-        const nueva = { estado: 'disponible', ...datos, id_habitacion: proximaHabitacion++ };
-        db.habitaciones.push(nueva);
-        db.version.habitaciones++;
-        return respuesta({ ok: true, estado_tabla: db.version.habitaciones, datos: nueva }, 201);
-      }
-    }
-    const hab = ruta.match(/^\/habitaciones\/(\d+)$/);
-    if (hab) {
-      const id = Number(hab[1]);
-      const habitacion = db.habitaciones.find((h) => h.id_habitacion === id);
-      if (!habitacion) return respuesta({ ok: false, mensaje: 'Habitación inexistente' }, 404);
-      if (metodo === 'PUT') habitacion.estado = cuerpo.nuevo_estado;
-      if (metodo === 'DELETE') db.habitaciones = db.habitaciones.filter((h) => h.id_habitacion !== id);
-      db.version.habitaciones++;
-      return respuesta({ ok: true, estado_tabla: db.version.habitaciones });
-    }
-
-    if (ruta === '/reservas') {
-      if (metodo === 'GET') return respuesta(tablaReservas());
-      if (metodo === 'POST') {
-        const { version, ...datos } = cuerpo;
-        if (!(datos.fecha_fin > datos.fecha_inicio)) {
-          return respuesta({ ok: false, mensaje: 'La fecha de salida debe ser posterior a la de entrada.' }, 400);
-        }
-        const choque = db.reservas.some((r) => r.id_habitacion === datos.id_habitacion && r.estado !== 'cancelada' && solapan(r, datos));
-        if (choque) return respuesta({ ok: false, mensaje: 'La habitación ya está reservada en esas fechas.' }, 409);
-        const hoy = new Date().toISOString().slice(0, 10);
-        const nueva = { estado: 'pendiente', fecha_creacion: hoy, ...datos, id_reserva: proximaReserva++ };
-        db.reservas.push(nueva);
-        db.version.reservas++;
-        return respuesta({ ok: true, estado_tabla: db.version.reservas, datos: nueva }, 201);
-      }
-    }
-    const res = ruta.match(/^\/reservas\/(\d+)$/);
-    if (res) {
-      const id = Number(res[1]);
-      const reserva = db.reservas.find((r) => r.id_reserva === id);
-      if (!reserva) return respuesta({ ok: false, mensaje: 'Reserva inexistente' }, 404);
-      if (metodo === 'PUT') {
-        const { version, ...cambios } = cuerpo;
-        Object.assign(reserva, cambios);
-      }
-      if (metodo === 'DELETE') db.reservas = db.reservas.filter((r) => r.id_reserva !== id);
-      db.version.reservas++;
-      return respuesta({ ok: true, estado_tabla: db.version.reservas });
-    }
-    return respuesta({ ok: false, mensaje: 'Ruta inexistente' }, 404);
-  }
 
   window.fetch = async (entrada, opciones = {}) => {
     const url = typeof entrada === 'string' ? entrada : entrada.url;
     if (!url.startsWith(API_URL)) return fetchReal(entrada, opciones);
     const ruta = url.slice(API_URL.length).split('?')[0];
     const metodo = (opciones.method || 'GET').toUpperCase();
-    const cuerpo = opciones.body ? JSON.parse(opciones.body) : {};
+    let cuerpo = {};
+    try {
+      cuerpo = opciones.body ? JSON.parse(opciones.body) : {};
+    } catch {
+      return error('JSON inválido', 400);
+    }
     await new Promise((resolver) => setTimeout(resolver, 120));
-    return manejar(metodo, ruta, cuerpo);
+    return servidor.manejar(metodo, ruta, cuerpo);
   };
 }

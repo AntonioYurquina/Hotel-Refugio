@@ -1,165 +1,128 @@
-import React, { useState, useMemo } from 'react';
-import { differenceInDays } from 'date-fns';
+import React, { useMemo, useState } from 'react';
+import { Pie } from 'react-chartjs-2';
 import RoomsAdmin from './Admin/RoomsAdmin';
 import UsersAdmin from './Admin/UsersAdmin';
 import ReservationsAdmin from './Admin/ReservationsAdmin';
 import RevenueChart from './Admin/RevenueChart';
-import { Pie } from 'react-chartjs-2';
-import { useTheme } from '../context/ThemeContext';
-import RoomEditForm from './Admin/RoomEditForm';
-import UserEditForm from './Admin/UserEditForm';
+import RoomCreateForm from './Admin/RoomCreateForm';
+import UserCreateForm from './Admin/UserCreateForm';
+import Modal from '../components/ui/Modal';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import { useTheme } from '../context/themeContext';
+import { indicadoresGerencia } from '../utils/estadisticas';
+import { formatearPrecio, capitalizar } from '../utils/formato';
 
-const StatCard = ({ title, value, icon, color }) => (
+const COLOR_ESTADO = {
+  light: { disponible: '#198754', ocupada: '#dc3545', mantenimiento: '#ffc107', cerrada: '#6c757d' },
+  dark: { disponible: '#20c997', ocupada: '#ff8c00', mantenimiento: '#ffca2c', cerrada: '#adb5bd' },
+};
+
+const Indicador = ({ titulo, valor, icono, color }) => (
   <div className="col">
     <div className="card text-center p-3 shadow-sm h-100">
-      <div className={`fs-2 fw-bold ${color}`}><i className={`fa-solid ${icon} me-2`}></i>{value}</div>
-      <div className="text-muted">{title}</div>
+      <div className={`fs-2 fw-bold ${color}`}><i className={`fa-solid ${icono} me-2`} aria-hidden="true"></i>{valor}</div>
+      <div className="text-muted">{titulo}</div>
     </div>
   </div>
 );
 
-export default function Admin({ user, habitaciones, reservas, users, deleteReservation, deleteUser, updateRoom, updateUser, createRoom, deleteRoom, createUser }) {
+const PESTANAS = [['rooms', 'Habitaciones'], ['users', 'Usuarios'], ['reservations', 'Reservas']];
+
+export default function Admin({ user, habitaciones, reservas, usuarios, cambiarEstadoHabitacion, crearHabitacion, crearUsuario, eliminarReserva }) {
   const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState('rooms');
-  const [editingRoom, setEditingRoom] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
-  const [isCreating, setIsCreating] = useState(null); // 'room' o 'user'
+  const [pestana, setPestana] = useState('rooms');
+  const [creando, setCreando] = useState(null); // 'habitacion' | 'usuario'
+  const [eliminando, setEliminando] = useState(null);
 
-  const { stats, roomStatusData } = useMemo(() => {
-    const finalizadas = reservas.filter(r => r.estado === 'finalizada');
-    const totalNights = finalizadas.reduce((acc, res) => acc + differenceInDays(new Date(res.fecha_fin), new Date(res.fecha_inicio)), 0);
-    const totalRevenue = finalizadas.reduce((acc, res) => {
-      const room = habitaciones.datos.find(r => r.id_habitacion === res.id_habitacion);
-      const nights = differenceInDays(new Date(res.fecha_fin), new Date(res.fecha_inicio));
-      return acc + (room && nights > 0 ? nights * parseFloat(room.precio_noche) : 0);
-    }, 0);
-    
-    const occupancy = habitaciones.datos.length > 0 
-      ? ((habitaciones.datos.filter(r => r.estado === 'ocupada').length) / habitaciones.datos.length) * 100 
-      : 0;
+  const indicadores = useMemo(() => indicadoresGerencia(habitaciones, reservas), [habitaciones, reservas]);
 
-    const statusCounts = habitaciones.datos.reduce((acc, room) => {
-      acc[room.estado] = (acc[room.estado] || 0) + 1;
-      return acc;
-    }, {});
-
-    const pieData = {
-      labels: Object.keys(statusCounts),
+  const datosTorta = useMemo(() => {
+    const estados = Object.keys(indicadores.estadosHabitacion);
+    return {
+      labels: estados.map(capitalizar),
       datasets: [{
-        data: Object.values(statusCounts),
-        backgroundColor: theme === 'light' ? ['#198754', '#dc3545', '#ffc107', '#6c757d'] : ['#20c997', '#ff8c00', '#ffca2c', '#adb5bd'],
+        data: estados.map((e) => indicadores.estadosHabitacion[e]),
+        backgroundColor: estados.map((e) => COLOR_ESTADO[theme][e]),
         borderColor: theme === 'light' ? '#fff' : '#300A24',
         borderWidth: 2,
       }],
     };
+  }, [indicadores, theme]);
 
-    return {
-      stats: {
-        totalRevenue: totalRevenue.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }),
-        avgRate: finalizadas.length > 0 ? (totalRevenue / finalizadas.length).toLocaleString('es-AR', { style: 'currency', currency: 'ARS' }) : '$0',
-        avgStay: finalizadas.length > 0 ? (totalNights / finalizadas.length).toFixed(1) : 0,
-        occupancy: occupancy.toFixed(1) + '%',
-      },
-      roomStatusData: pieData,
-    };
-  }, [reservas, habitaciones, theme]);
-
-  const handleAddRoom = () => {
-    setEditingRoom({ numero: '', tipo: '', capacidad: 1, precio_noche: 0, descripcion: '' });
+  const guardarHabitacion = async (datos) => {
+    const r = await crearHabitacion(datos);
+    if (r.ok) setCreando(null);
   };
-
-  const handleAddUser = () => {
-    setEditingUser({ nombre: '', apellido: '', email: '', telefono: '', tipo_usuario: 'cliente' });
+  const guardarUsuario = async (datos) => {
+    if (await crearUsuario(datos)) setCreando(null);
   };
-
-  const handleSaveRoom = (data) => {
-    if (data.id_habitacion) {
-      updateRoom(data);
-    } else {
-      createRoom(data);
-    }
-    setEditingRoom(null);
-  };
-
-  const handleSaveUser = (data) => {
-    if (data.id_usuario) {
-      updateUser(data);
-    } else {
-      createUser(data);
-    }
-    setEditingUser(null);
+  const confirmarEliminacion = async () => {
+    const r = await eliminarReserva(eliminando.id_reserva);
+    if (r.ok) setEliminando(null);
   };
 
   return (
     <div className="container-fluid py-4 main-content">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h3>Panel de Gerencia</h3>
-          <p className="text-muted mb-0">Bienvenido, {user.datos.nombre}. Visión general del negocio.</p>
-        </div>
+      <div className="mb-4">
+        <h1 className="h3">Panel de gerencia</h1>
+        <p className="text-muted mb-0">Bienvenido, {user.datos.nombre}. Visión general del negocio.</p>
       </div>
 
-      {/* KPIs Estratégicos */}
       <div className="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-4">
-        <StatCard title="Ingresos Totales" value={stats.totalRevenue} icon="fa-sack-dollar" color="text-success" />
-        <StatCard title="Ocupación Actual" value={stats.occupancy} icon="fa-chart-pie" color="text-danger" />
-        <StatCard title="Estadía Promedio" value={`${stats.avgStay} Noches`} icon="fa-bed" color="text-primary" />
-        <StatCard title="Tarifa Promedio" value={stats.avgRate} icon="fa-tag" color="text-info" />
+        <Indicador titulo="Ingresos (finalizadas)" valor={formatearPrecio(indicadores.ingresos)} icono="fa-sack-dollar" color="text-success" />
+        <Indicador titulo="Ocupación actual" valor={`${indicadores.ocupacion.toFixed(1)}%`} icono="fa-chart-pie" color="text-danger" />
+        <Indicador titulo="Estadía promedio" valor={`${indicadores.estadiaPromedio.toFixed(1)} noches`} icono="fa-bed" color="text-primary" />
+        <Indicador titulo="Ingreso por reserva" valor={formatearPrecio(indicadores.tarifaPromedio)} icono="fa-tag" color="text-info" />
       </div>
 
-      {/* Visualizaciones de Datos */}
       <div className="row g-4 mb-4">
         <div className="col-lg-8">
-          <div className="card shadow-sm h-100">
-            <div className="card-body">
-              <RevenueChart reservations={reservas} rooms={habitaciones.datos} />
-            </div>
-          </div>
+          <div className="card shadow-sm h-100"><div className="card-body"><RevenueChart reservations={reservas} rooms={habitaciones} /></div></div>
         </div>
         <div className="col-lg-4">
-          <div className="card shadow-sm h-100">
-            <div className="card-body d-flex flex-column">
-              <h5 className="card-title mb-3">Estado de Habitaciones</h5>
-              <div className="flex-grow-1 d-flex align-items-center justify-content-center" style={{ position: 'relative', height: '300px' }}>
-                <Pie data={roomStatusData} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: theme === 'light' ? '#495057' : '#dee2e6' } } } }} />
-              </div>
+          <div className="card shadow-sm h-100"><div className="card-body d-flex flex-column">
+            <h2 className="h5 card-title mb-3">Estado de habitaciones</h2>
+            <div style={{ position: 'relative', height: '280px' }}>
+              <Pie data={datosTorta} options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { color: theme === 'light' ? '#495057' : '#dee2e6' } } } }} />
             </div>
-          </div>
+          </div></div>
         </div>
       </div>
 
-      {/* Tablas de Gestión */}
       <div className="card shadow-sm">
         <div className="card-header">
-          <ul className="nav nav-tabs card-header-tabs">
-            <li className="nav-item"><button className={`nav-link ${activeTab === 'rooms' ? 'active' : ''}`} onClick={() => setActiveTab('rooms')}>Habitaciones</button></li>
-            <li className="nav-item"><button className={`nav-link ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>Usuarios</button></li>
-            <li className="nav-item"><button className={`nav-link ${activeTab === 'reservations' ? 'active' : ''}`} onClick={() => setActiveTab('reservations')}>Reservas</button></li>
+          <ul className="nav nav-tabs card-header-tabs" role="tablist">
+            {PESTANAS.map(([id, texto]) => (
+              <li key={id} className="nav-item" role="presentation">
+                <button type="button" role="tab" aria-selected={pestana === id} className={`nav-link ${pestana === id ? 'active' : ''}`} onClick={() => setPestana(id)}>{texto}</button>
+              </li>
+            ))}
           </ul>
         </div>
-        <div className="card-body">
-          {activeTab === 'rooms' && <RoomsAdmin rooms={habitaciones.datos} onAdd={handleAddRoom} onEdit={setEditingRoom} onDelete={deleteRoom} />}
-          {activeTab === 'users' && <UsersAdmin users={users} onAdd={handleAddUser} onEdit={setEditingUser} onDelete={deleteUser} />}
-          {activeTab === 'reservations' && <ReservationsAdmin reservations={reservas} onDelete={deleteReservation} />}
+        <div className="card-body" role="tabpanel">
+          {pestana === 'rooms' && <RoomsAdmin rooms={habitaciones} onAdd={() => setCreando('habitacion')} onChangeState={cambiarEstadoHabitacion} />}
+          {pestana === 'users' && <UsersAdmin users={usuarios} onAdd={() => setCreando('usuario')} />}
+          {pestana === 'reservations' && <ReservationsAdmin reservations={reservas} rooms={habitaciones} users={usuarios} currentUser={user.datos} onDelete={setEliminando} />}
         </div>
       </div>
 
-      {/* Modales de Edición / Creación */}
-      {editingRoom && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered"><div className="modal-content">
-            <div className="modal-header"><h5 className="modal-title">{editingRoom.id_habitacion ? 'Editar' : 'Crear'} Habitación</h5><button type="button" className="btn-close" onClick={() => setEditingRoom(null)}></button></div>
-            <div className="modal-body"><RoomEditForm room={editingRoom} onSave={handleSaveRoom} onCancel={() => setEditingRoom(null)} /></div>
-          </div></div>
-        </div>
+      {creando === 'habitacion' && (
+        <Modal titulo="Crear habitación" onClose={() => setCreando(null)}>
+          <RoomCreateForm existing={habitaciones} onSave={guardarHabitacion} onCancel={() => setCreando(null)} />
+        </Modal>
       )}
-      {editingUser && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered"><div className="modal-content">
-            <div className="modal-header"><h5 className="modal-title">{editingUser.id_usuario ? 'Editar' : 'Crear'} Usuario</h5><button type="button" className="btn-close" onClick={() => setEditingUser(null)}></button></div>
-            <div className="modal-body"><UserEditForm user={editingUser} onSave={handleSaveUser} onCancel={() => setEditingUser(null)} /></div>
-          </div></div>
-        </div>
+      {creando === 'usuario' && (
+        <Modal titulo="Crear usuario" onClose={() => setCreando(null)}>
+          <UserCreateForm onSave={guardarUsuario} onCancel={() => setCreando(null)} />
+        </Modal>
+      )}
+      {eliminando && (
+        <ConfirmDialog
+          titulo="Eliminar reserva"
+          mensaje={`¿Seguro que querés eliminar la reserva #${eliminando.id_reserva}? Esta acción no se puede deshacer.`}
+          onConfirm={confirmarEliminacion}
+          onCancel={() => setEliminando(null)}
+        />
       )}
     </div>
   );

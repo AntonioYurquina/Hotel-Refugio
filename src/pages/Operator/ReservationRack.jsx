@@ -1,63 +1,52 @@
 import React, { useMemo, useState } from 'react';
-import { format, addDays, differenceInDays } from 'date-fns';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/themeContext';
+import { aFechaApi, hoyApi, noches, sumarDias } from '../../utils/fechas';
+
+const DIAS = 31;
+const COLORES = {
+  light: { confirmada: '#198754', pendiente: '#ffc107', cancelada: '#dc3545', finalizada: '#6c757d' },
+  dark: { confirmada: '#20c997', pendiente: '#ffca2c', cancelada: '#fd7e14', finalizada: '#adb5bd' },
+};
 
 export default function ReservationRack({ rooms, reservations, onEditReservation }) {
   const { theme } = useTheme();
   const [showArchived, setShowArchived] = useState(false);
 
-  const filteredReservations = useMemo(() => 
-    showArchived
-      ? reservations
-      : reservations.filter(res => res.estado === 'confirmada' || res.estado === 'pendiente'), 
-  [reservations, showArchived]);
+  const inicio = hoyApi();
+  const dias = useMemo(() => Array.from({ length: DIAS }, (_, i) => sumarDias(inicio, i)), [inicio]);
 
-  const { startDate, endDate, totalDays, daysArray } = useMemo(() => {
-    const start = new Date();
-    const end = addDays(start, 30);
-    const count = differenceInDays(end, start) + 1;
-    const days = Array.from({ length: count }, (_, i) => addDays(start, i));
-    return {
-      startDate: start,
-      endDate: end,
-      totalDays: count,
-      daysArray: days,
-    };
-  }, []);
+  const visibles = useMemo(
+    () =>
+      reservations.filter(
+        (res) =>
+          (showArchived || res.estado === 'confirmada' || res.estado === 'pendiente') &&
+          aFechaApi(res.fecha_fin) >= inicio &&
+          noches(inicio, res.fecha_inicio) < DIAS,
+      ),
+    [reservations, showArchived, inicio],
+  );
 
-  const getReservationStyle = (res) => {
-    const resStart = new Date(res.fecha_inicio);
-    const resEnd = new Date(res.fecha_fin);
-
-    const left = Math.max(0, differenceInDays(resStart, startDate));
-    const right = Math.max(0, differenceInDays(endDate, resEnd));
-    
-    const leftPercent = (left / totalDays) * 100;
-    const rightPercent = (right / totalDays) * 100;
-
-    const status = res.estado;
-    const colors = {
-      light: { confirmada: '#198754', pendiente: '#ffc107', cancelada: '#dc3545', finalizada: '#6c757d' },
-      dark: { confirmada: '#20c997', pendiente: '#ffca2c', cancelada: '#fd7e14', finalizada: '#adb5bd' }
-    };
-
+  // Posición de cada barra dentro de la ventana de 31 días, recortada en los bordes.
+  const estiloBarra = (res) => {
+    const desde = Math.max(0, noches(inicio, res.fecha_inicio));
+    const hasta = Math.min(DIAS, Math.max(desde + 1, noches(inicio, res.fecha_fin) + 1));
     return {
       position: 'absolute',
-      left: `${leftPercent}%`,
-      right: `${rightPercent}%`,
+      left: `${(desde / DIAS) * 100}%`,
+      width: `${((hasta - desde) / DIAS) * 100}%`,
       top: '5px',
       bottom: '5px',
-      backgroundColor: colors[theme][status] || colors[theme]['finalizada'],
+      backgroundColor: COLORES[theme][res.estado] ?? COLORES[theme].finalizada,
       borderRadius: '5px',
-      overflow: 'hidden',
-      color: status === 'pendiente' ? 'black' : 'white',
+      color: res.estado === 'pendiente' ? 'black' : 'white',
       fontSize: '12px',
-      padding: '0 5px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       cursor: 'pointer',
-      opacity: (status === 'cancelada' || status === 'finalizada') ? 0.6 : 1,
+      border: 0,
+      overflow: 'hidden',
+      opacity: res.estado === 'cancelada' || res.estado === 'finalizada' ? 0.6 : 1,
     };
   };
 
@@ -79,27 +68,29 @@ export default function ReservationRack({ rooms, reservations, onEditReservation
           <thead>
             <tr>
               <th style={{ minWidth: '150px' }}>Habitación</th>
-              {daysArray.map(day => (
-                <th key={day.toString()} className="text-center">{format(day, 'd')}</th>
+              {dias.map((day) => (
+                <th key={day} className="text-center small">{Number(day.slice(8))}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rooms.map(room => (
+            {rooms.map((room) => (
               <tr key={room.id_habitacion}>
-                <td>{room.numero} ({room.tipo})</td>
-                <td colSpan={totalDays} style={{ position: 'relative', padding: 0 }}>
-                  {filteredReservations
-                    .filter(res => res.id_habitacion === room.id_habitacion)
-                    .map(res => (
-                      <div 
-                        key={res.id_reserva} 
-                        style={getReservationStyle(res)} 
+                <td className="text-nowrap">{room.numero} · {room.tipo}</td>
+                <td colSpan={DIAS} style={{ position: 'relative', padding: 0 }}>
+                  {visibles
+                    .filter((res) => res.id_habitacion === room.id_habitacion)
+                    .map((res) => (
+                      <button
+                        type="button"
+                        key={res.id_reserva}
+                        style={estiloBarra(res)}
                         title={`Reserva #${res.id_reserva} (${res.estado})`}
+                        aria-label={`Ver la reserva ${res.id_reserva}, ${res.estado}`}
                         onClick={() => onEditReservation(res)}
                       >
-                        <span>ID: {res.id_reserva}</span>
-                      </div>
+                        #{res.id_reserva}
+                      </button>
                     ))}
                 </td>
               </tr>

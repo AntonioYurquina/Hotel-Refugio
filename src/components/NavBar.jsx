@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../context/themeContext';
 
 export default function NavBar({ user, logout }) {
   const { theme, toggleTheme } = useTheme();

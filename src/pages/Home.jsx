@@ -1,23 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Hero from '../components/Hero';
-import RoomCarousel from '../components/RoomCarousel'; // Importar el nuevo carrusel
+import RoomCarousel from '../components/RoomCarousel';
 import LocationMap from '../components/LocationMap';
 import Testimonials from '../components/Testimonials';
-import { imagenHabitacion } from '../config';
+import { adaptarHabitacion } from '../utils/habitaciones';
 
-export default function Home({ habitaciones, user }) {
-  const adaptedRooms = habitaciones ? habitaciones.map(h => ({
-    id: h.id_habitacion,
-    name: `Habitación ${h.numero} (${h.tipo})`,
-    price: parseFloat(h.precio_noche),
-    capacity: parseInt(h.capacidad, 10),
-    description: h.descripcion,
-    images: [
-      imagenHabitacion(h.id_habitacion, 0),
-      imagenHabitacion(h.id_habitacion, 1),
-      imagenHabitacion(h.id_habitacion, 2),
-    ]
-  })) : [];
+export default function Home({ habitaciones }) {
+  const rooms = useMemo(() => habitaciones.filter((h) => h.estado !== 'cerrada').map(adaptarHabitacion), [habitaciones]);
 
   return (
     <>
@@ -26,7 +15,7 @@ export default function Home({ habitaciones, user }) {
         {/* Sección de Habitaciones con Carrusel */}
         <section className="mb-5">
           <h2 className="text-center mb-4">Nuestras Habitaciones</h2>
-          <RoomCarousel rooms={adaptedRooms} />
+          <RoomCarousel rooms={rooms} />
         </section>
 
         {/* Sección de Servicios */}

@@ -2,40 +2,58 @@
 
 Sistema de gestión hotelero (proyecto de la facultad) hecho con React y Vite. Tiene tres frentes:
 
-- **Sitio público:** habitaciones con galería, reservas y contacto.
-- **Panel de operador:** calendario de reservas, rack, mapa de habitaciones y estadísticas.
-- **Panel de administración:** ingresos, ocupación, estadía promedio y gestión de usuarios, habitaciones y reservas.
+- **Sitio público:** habitaciones con galería y portal de reservas con búsqueda por fechas.
+- **Panel de operador:** calendario, rack de 30 días, mapa de habitaciones, gestor de reservas y estadísticas.
+- **Panel de gerencia:** ingresos, ocupación, estadía promedio, alta de habitaciones y usuarios, y todas las reservas.
 
 **Demo:** https://AntonioYurquina.github.io/Hotel-Refugio
 
-## Demo con datos ficticios
+## Dos modos de funcionamiento
 
-El servidor original ya no está en línea, así que la demo funciona sin backend: una API simulada en memoria
-(`src/demo/`) responde a las mismas rutas que el servidor real y carga habitaciones, usuarios y reservas
-ficticias. Los cambios que hagas (crear una reserva, cambiar el estado de una habitación) se mantienen hasta
-recargar la página. Las fechas se calculan respecto del día actual, y si una reserva choca con otra en la misma
-habitación se rechaza.
+La aplicación habla con la **API Hotel v1** (contrato en `docs/INFORME_PMBOK.md`, sección 5) y puede correr de dos formas:
 
-Desde el ingreso hay un acceso de un clic por rol. También podés usar estas cuentas con la contraseña `demo`:
+| Modo | Cuándo | Datos |
+| ---- | ------ | ----- |
+| **Demo** (por defecto) | sin `VITE_API_URL` | API simulada en memoria (`src/demo/`) con el mismo contrato que la real: versiones, 409, enums, fechas ISO. Los cambios duran hasta recargar. |
+| **API real** | con `VITE_API_URL` | El servidor de la API. El modo demo se desactiva solo. |
 
-| Rol           | Email                  |
-| ------------- | ---------------------- |
-| Cliente       | `cliente@example.com`  |
-| Operador      | `operador@example.com` |
-| Administrador | `admin@example.com`    |
+Para usar la API real copiá `.env.example` a `.env.local` y completá la URL base.
+
+En modo demo hay un acceso de un clic por rol y un botón **«Simular cambio de otro usuario»** que muestra en vivo el control de concurrencia: la siguiente escritura recibe un `409`, la app recarga los datos y avisa. También podés usar las cuentas `cliente@example.com`, `operador@example.com` y `admin@example.com` con la contraseña `demo`.
 
 ## Instalación y ejecución
 
 ```bash
 npm install
-npm run dev      # desarrollo
-npm run build    # build de producción
-npm run deploy   # publica en GitHub Pages
+npm run dev        # desarrollo (modo demo, o API real si hay .env.local)
+npm run build      # build de producción
+npm run lint       # ESLint, sin advertencias
+npm test           # pruebas unitarias (Vitest)
+npm run deploy     # publica en GitHub Pages
 ```
 
-Por defecto la app corre en modo demo. Para usar un backend propio, definí `VITE_API_URL` (por ejemplo en un
-archivo `.env`) con la URL base de la API; el modo demo se desactiva solo.
+Pruebas contra la API real (solo lectura y respuestas 409 a propósito):
+
+```bash
+VITE_API_URL=<url base> npm test
+VITE_API_URL=<url base> VITE_API_REAL_ESCRIBIR=1 npm test   # además crea y elimina una reserva de prueba
+```
+
+## Estructura
+
+```
+src/api/        cliente de la API (ErrorApi, un método por ruta)
+src/demo/       API simulada y datos ficticios
+src/hooks/      useHotel: estado, versiones de tabla y escrituras con manejo de 409
+src/utils/      fechas (zona Argentina), validaciones, reglas de reservas, estadísticas
+src/components/ui/  Modal accesible, confirmación, insignias, pantallas de carga/error
+src/pages/      sitio público, panel de operador y de gerencia
+```
+
+## Qué permite (y qué no) la API v1
+
+La interfaz se adapta a las operaciones que existen: se pueden **crear habitaciones y cambiar su estado**, **crear, modificar y eliminar reservas**, **iniciar sesión** y **registrar usuarios**. No hay edición ni borrado de habitaciones o usuarios, ni listado de usuarios (`GET /usuarios` es una ruta de test que expone contraseñas y no se usa contra la API real). La API tampoco valida solapamientos de reservas ni el orden de las fechas: lo hace el frontend (`src/utils/reservas.js`).
 
 ## Tecnologías
 
-React 18, Vite, React Router, Bootstrap 5, Chart.js, React Big Calendar y date-fns.
+React 18, Vite, React Router, Bootstrap 5, Chart.js, React Big Calendar, date-fns y Vitest.

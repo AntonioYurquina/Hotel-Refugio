@@ -1,132 +1,96 @@
 import React, { useState, useMemo } from 'react';
 import RoomList from '../components/RoomList';
 import heroImage from '../components/image.png';
-import { imagenHabitacion } from '../config';
+import { adaptarHabitacion } from '../utils/habitaciones';
+import { habitacionLibre } from '../utils/reservas';
+import { formatearFecha, hoyApi, noches, sumarDias } from '../utils/fechas';
 
-export default function Reserve({ habitaciones, user, reservas, login, actualizarCredenciales, registrarUsuario }) {
-  const [filters, setFilters] = useState({
-    checkin: '',
-    checkout: '',
-    guests: 1,
-  });
+const FILTROS_VACIOS = { checkin: '', checkout: '', guests: 1 };
 
-  const adaptedRooms = useMemo(() => habitaciones ? habitaciones.map(h => ({
-    id: h.id_habitacion,
-    name: `Habitación ${h.numero} (${h.tipo})`,
-    price: parseFloat(h.precio_noche),
-    capacity: parseInt(h.capacidad, 10),
-    description: h.descripcion,
-    open: h.estado === 'disponible',
-    amenities: ['WiFi', 'TV', 'Servicio a la habitación'],
-    images: [
-      imagenHabitacion(h.id_habitacion, 0),
-      imagenHabitacion(h.id_habitacion, 1),
-      imagenHabitacion(h.id_habitacion, 2),
-    ]
-  })) : [], [habitaciones]);
+export default function Reserve({ habitaciones, user, reservas, login, registrarUsuario, crearReserva }) {
+  const [filters, setFilters] = useState(FILTROS_VACIOS);
+  const hoy = hoyApi();
+
+  const rooms = useMemo(() => habitaciones.map(adaptarHabitacion), [habitaciones]);
 
   const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
-  };
-
-  const handleClear = () => {
-    setFilters({ checkin: '', checkout: '', guests: 1 });
-  };
-
-  const filteredRooms = useMemo(() => {
-    const hasDateFilter = filters.checkin && filters.checkout;
-
-    // Si no hay fechas válidas, muestra todas las habitaciones abiertas.
-    if (!hasDateFilter) {
-      return adaptedRooms.filter(room => room.open);
-    }
-
-    const checkinDate = new Date(filters.checkin);
-    const checkoutDate = new Date(filters.checkout);
-
-    // Validar que la fecha de check-out sea posterior a la de check-in
-    if (checkoutDate <= checkinDate) {
-      return [];
-    }
-
-    return adaptedRooms.filter(room => {
-      // 1. Filtrar por capacidad y estado 'disponible'
-      if (room.capacity < filters.guests || !room.open) {
-        return false;
-      }
-
-      // 2. Filtrar por disponibilidad de fechas
-      const isUnavailable = reservas.some(res => {
-        if (res.id_habitacion !== room.id) return false;
-        // Corregido: usar fecha_inicio y fecha_fin de la API
-        const resStart = new Date(res.fecha_inicio);
-        const resEnd = new Date(res.fecha_fin);
-        // Comprobar si hay solapamiento de fechas
-        return (checkinDate < resEnd && checkoutDate > resStart);
-      });
-
-      return !isUnavailable;
+    const { name, value } = e.target;
+    setFilters((anteriores) => {
+      const siguientes = { ...anteriores, [name]: name === 'guests' ? Math.max(1, Number(value) || 1) : value };
+      // Si la salida quedó antes de la nueva entrada se limpia, para no mostrar un rango imposible.
+      if (siguientes.checkout && siguientes.checkin && noches(siguientes.checkin, siguientes.checkout) < 1) siguientes.checkout = '';
+      return siguientes;
     });
-  }, [filters, adaptedRooms, reservas]);
+  };
 
-  const showFilterResults = filters.checkin && filters.checkout;
+  const rangoCompleto = Boolean(filters.checkin && filters.checkout);
+
+  const filteredRooms = useMemo(
+    () =>
+      rooms.filter(
+        (room) =>
+          room.reservable &&
+          room.capacity >= filters.guests &&
+          (!rangoCompleto || habitacionLibre(room.id, filters.checkin, filters.checkout, reservas)),
+      ),
+    [rooms, reservas, filters, rangoCompleto],
+  );
 
   const headerStyle = {
     backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${heroImage})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
-    minHeight: '60vh', // Altura similar a la del Hero, pero un poco más corta
+    minHeight: '40vh',
   };
 
   return (
     <>
-      <header 
-        className="hero-section text-center text-white d-flex align-items-center justify-content-center"
-        style={headerStyle}
-      >
+      <header className="hero-section text-center text-white d-flex align-items-center justify-content-center" style={headerStyle}>
         <div>
           <h1 className="display-4 fw-bold">Portal de Reservas</h1>
-          <p className="lead">Encuentra la habitación perfecta para tu estadía.</p>
+          <p className="lead">Encontrá la habitación perfecta para tu estadía.</p>
         </div>
       </header>
 
       <div className="container py-5">
-        <div className="card shadow-sm mb-5">
+        <form className="card shadow-sm mb-5" onSubmit={(e) => e.preventDefault()} aria-label="Buscar habitaciones">
           <div className="card-body">
             <div className="row g-3 align-items-end">
               <div className="col-md-4">
-                <label className="form-label">Check-in</label>
-                <input type="date" name="checkin" className="form-control" value={filters.checkin} onChange={handleFilterChange} />
+                <label htmlFor="filtro-checkin" className="form-label">Entrada</label>
+                <input id="filtro-checkin" type="date" name="checkin" className="form-control" min={hoy} value={filters.checkin} onChange={handleFilterChange} />
               </div>
               <div className="col-md-4">
-                <label className="form-label">Check-out</label>
-                <input type="date" name="checkout" className="form-control" value={filters.checkout} onChange={handleFilterChange} />
+                <label htmlFor="filtro-checkout" className="form-label">Salida</label>
+                <input id="filtro-checkout" type="date" name="checkout" className="form-control" min={filters.checkin ? sumarDias(filters.checkin, 1) : hoy} value={filters.checkout} onChange={handleFilterChange} />
               </div>
               <div className="col-md-2">
-                <label className="form-label">Huéspedes</label>
-                <input type="number" name="guests" className="form-control" value={filters.guests} min="1" onChange={handleFilterChange} />
+                <label htmlFor="filtro-huespedes" className="form-label">Huéspedes</label>
+                <input id="filtro-huespedes" type="number" name="guests" className="form-control" value={filters.guests} min="1" onChange={handleFilterChange} />
               </div>
               <div className="col-md-2">
-                <button className="btn btn-outline-secondary w-100" onClick={handleClear}>Limpiar</button>
+                <button type="button" className="btn btn-outline-secondary w-100" onClick={() => setFilters(FILTROS_VACIOS)}>Limpiar</button>
               </div>
             </div>
           </div>
-        </div>
+        </form>
 
-        <h3 className="h4 mb-4">
-          {showFilterResults ? `Resultados de la Búsqueda (${filteredRooms.length})` : `Habitaciones Disponibles (${filteredRooms.length})`}
-        </h3>
-        {showFilterResults && filteredRooms.length === 0 && (
-          <div className="alert alert-warning">No se encontraron habitaciones disponibles para los criterios seleccionados.</div>
+        <h2 className="h4 mb-4" aria-live="polite">
+          {rangoCompleto ? `Disponibles del ${formatearFecha(filters.checkin)} al ${formatearFecha(filters.checkout)}` : 'Habitaciones'} ({filteredRooms.length})
+        </h2>
+        {filteredRooms.length === 0 && (
+          <div className="alert alert-warning" role="status">
+            No hay habitaciones disponibles para los criterios elegidos. Probá con otras fechas o menos huéspedes.
+          </div>
         )}
-        <RoomList 
-          rooms={filteredRooms} 
-          user={user} 
-          interactive={true} 
+        <RoomList
+          rooms={filteredRooms}
+          user={user}
+          reservas={reservas}
           initialFilters={filters}
           login={login}
-          actualizarCredenciales={actualizarCredenciales}
           registrarUsuario={registrarUsuario}
+          crearReserva={crearReserva}
         />
       </div>
     </>

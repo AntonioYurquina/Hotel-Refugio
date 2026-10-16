@@ -1,123 +1,68 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import RoomCard from './RoomCard';
 import ReservationForm from './ReservationForm';
 import AuthInModal from './AuthInModal';
+import Modal from './ui/Modal';
+import { formatearPrecio } from '../utils/formato';
+import { alFallarImagen } from '../utils/habitaciones';
 
-export default function RoomList({ rooms, user, interactive, initialFilters, login, actualizarCredenciales, registrarUsuario }) {
+export default function RoomList({ rooms, user, reservas, initialFilters, login, registrarUsuario, crearReserva }) {
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  if (!rooms) {
-    return (
-      <div className="text-center p-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="mt-2 text-muted">Cargando habitaciones...</p>
-      </div>
-    );
-  }
-
-  const handleSelectRoom = (room) => {
-    setSelectedRoom(room);
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedRoom(null);
-    setIsModalOpen(false);
-  };
+  const cerrar = () => setSelectedRoom(null);
 
   return (
     <div>
       <div id="rooms" className="row g-4">
-        {rooms.map(room => (
+        {rooms.map((room) => (
           <div key={room.id} className="col-md-6 col-lg-4">
-            <RoomCard 
-              room={room} 
-              onSelect={() => handleSelectRoom(room)} 
-              isInteractive={true} // Todas las tarjetas son clicables para ver detalles
-            />
+            <RoomCard room={room} onSelect={() => setSelectedRoom(room)} isInteractive />
           </div>
         ))}
       </div>
 
       {selectedRoom && (
-        <div className="modal show d-block" tabIndex="-1" role="dialog" aria-modal="true" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">{selectedRoom.name}</h5>
-                <button type="button" className="btn-close" onClick={handleCloseModal}></button>
-              </div>
-              <div className="modal-body">
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <div id="roomCarousel" className="carousel slide" data-bs-ride="carousel">
-                      <div className="carousel-inner">
-                        {selectedRoom.images.map((img, index) => (
-                          <div key={index} className={`carousel-item ${index === 0 ? 'active' : ''}`}>
-                            <img src={img} className="d-block w-100" alt={`Imagen ${index + 1} de ${selectedRoom.name}`} />
-                          </div>
-                        ))}
-                      </div>
-                      <button className="carousel-control-prev" type="button" data-bs-target="#roomCarousel" data-bs-slide="prev">
-                        <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span className="visually-hidden">Previous</span>
-                      </button>
-                      <button className="carousel-control-next" type="button" data-bs-target="#roomCarousel" data-bs-slide="next">
-                        <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span className="visually-hidden">Next</span>
-                      </button>
+        <Modal titulo={selectedRoom.name} onClose={cerrar} tamano="modal-lg">
+          <div className="row mb-3">
+            <div className="col-md-6 mb-3 mb-md-0">
+              <div id="roomCarousel" className="carousel slide" data-bs-ride="carousel">
+                <div className="carousel-inner">
+                  {selectedRoom.images.map((img, index) => (
+                    <div key={img} className={`carousel-item ${index === 0 ? 'active' : ''}`}>
+                      <img src={img} onError={alFallarImagen} className="d-block w-100 rounded" alt={`Foto ${index + 1} de la ${selectedRoom.name}`} />
                     </div>
-                  </div>
-                  <div className="col-md-6">
-                    <p>{selectedRoom.description}</p>
-                    <h6>Comodidades:</h6>
-                    <ul>
-                      {selectedRoom.amenities.map(a => <li key={a}>{a}</li>)}
-                    </ul>
-                    <p className="fs-4 fw-bold text-primary">${selectedRoom.price.toFixed(2)} <span className="fs-6 fw-normal text-muted">/ noche</span></p>
-                  </div>
+                  ))}
                 </div>
-                <hr />
-                
-                {interactive ? (
-                  user.ok ? (
-                    <ReservationForm 
-                      room={selectedRoom} 
-                      onClose={handleCloseModal} 
-                      user={user} 
-                      initialData={initialFilters}
-                    />
-                  ) : (
-                    isModalOpen ? (
-                      <AuthInModal 
-                        login={login} 
-                        actualizarCredenciales={actualizarCredenciales} 
-                        registrarUsuario={registrarUsuario} 
-                      />
-                    ) : (
-                      <div className="text-center p-3">
-                        <button className="btn btn-primary btn-lg" onClick={() => setIsModalOpen(true)}>
-                          Iniciar Sesión para Reservar
-                        </button>
-                      </div>
-                    )
-                  )
-                ) : (
-                  <div className="text-center p-3">
-                    <p>¿Te gusta esta habitación?</p>
-                    <Link to="/reserve" className="btn btn-success btn-lg">
-                      Ir al Portal de Reservas
-                    </Link>
-                  </div>
-                )}
+                <button className="carousel-control-prev" type="button" data-bs-target="#roomCarousel" data-bs-slide="prev">
+                  <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span className="visually-hidden">Foto anterior</span>
+                </button>
+                <button className="carousel-control-next" type="button" data-bs-target="#roomCarousel" data-bs-slide="next">
+                  <span className="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span className="visually-hidden">Foto siguiente</span>
+                </button>
               </div>
             </div>
+            <div className="col-md-6">
+              <p>{selectedRoom.description}</p>
+              <p className="mb-2"><i className="fa-solid fa-user-group me-2" aria-hidden="true"></i>Hasta {selectedRoom.capacity} {selectedRoom.capacity === 1 ? 'persona' : 'personas'}</p>
+              <h3 className="h6">Comodidades</h3>
+              <ul>{selectedRoom.amenities.map((a) => <li key={a}>{a}</li>)}</ul>
+              <p className="fs-4 fw-bold text-brand-orange mb-0">
+                {formatearPrecio(selectedRoom.price)} <span className="fs-6 fw-normal text-muted">/ noche</span>
+              </p>
+            </div>
           </div>
-        </div>
+          <hr />
+          {user.ok && user.datos.tipo_usuario === 'cliente' ? (
+            <ReservationForm room={selectedRoom} user={user} reservas={reservas} initialData={initialFilters} crearReserva={crearReserva} onClose={cerrar} />
+          ) : user.ok ? (
+            <div className="alert alert-info mb-0">
+              Estás con una cuenta de {user.datos.tipo_usuario}. Las reservas de clientes se cargan desde el panel de operador.
+            </div>
+          ) : (
+            <AuthInModal login={login} registrarUsuario={registrarUsuario} />
+          )}
+        </Modal>
       )}
     </div>
   );

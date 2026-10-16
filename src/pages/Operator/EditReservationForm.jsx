@@ -1,46 +1,61 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { ESTADOS_RESERVA, validarReserva } from '../../utils/reservas';
+import { aFechaApi, sumarDias } from '../../utils/fechas';
+import { capitalizar } from '../../utils/formato';
 
-export default function EditReservationForm({ reservation, onSave, onCancel }) {
-  const [formData, setFormData] = useState({
+export default function EditReservationForm({ reservation, rooms, reservations, onSave, onCancel }) {
+  const [form, setForm] = useState({
     ...reservation,
-    // Corregido: usar los nombres de campo correctos de la API
-    fecha_inicio: reservation.fecha_inicio.split('T')[0],
-    fecha_fin: reservation.fecha_fin.split('T')[0],
+    fecha_inicio: aFechaApi(reservation.fecha_inicio),
+    fecha_fin: aFechaApi(reservation.fecha_fin),
   });
+  const [enviando, setEnviando] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const cambiar = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: name === 'id_habitacion' ? Number(value) : value });
   };
 
-  const handleSubmit = (e) => {
+  const problema = useMemo(
+    () => validarReserva(form, reservations, rooms, { idExcluido: reservation.id_reserva }),
+    [form, reservations, rooms, reservation.id_reserva],
+  );
+
+  const enviar = async (e) => {
     e.preventDefault();
-    onSave(formData);
+    setEnviando(true);
+    await onSave(form);
+    setEnviando(false);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={enviar}>
       <div className="row g-3">
-        <div className="col-md-6">
-          <label className="form-label">Check-in</label>
-          <input type="date" name="fecha_inicio" className="form-control" value={formData.fecha_inicio} onChange={handleChange} />
+        <div className="col-12">
+          <label htmlFor="editar-habitacion" className="form-label">Habitación</label>
+          <select id="editar-habitacion" name="id_habitacion" className="form-select" value={form.id_habitacion} onChange={cambiar}>
+            {rooms.map((h) => <option key={h.id_habitacion} value={h.id_habitacion}>Hab. {h.numero} · {capitalizar(h.tipo)}</option>)}
+          </select>
         </div>
         <div className="col-md-6">
-          <label className="form-label">Check-out</label>
-          <input type="date" name="fecha_fin" className="form-control" value={formData.fecha_fin} onChange={handleChange} />
+          <label htmlFor="editar-inicio" className="form-label">Entrada</label>
+          <input id="editar-inicio" type="date" name="fecha_inicio" className="form-control" value={form.fecha_inicio} onChange={cambiar} required />
+        </div>
+        <div className="col-md-6">
+          <label htmlFor="editar-fin" className="form-label">Salida</label>
+          <input id="editar-fin" type="date" name="fecha_fin" className="form-control" min={form.fecha_inicio ? sumarDias(form.fecha_inicio, 1) : undefined} value={form.fecha_fin} onChange={cambiar} required />
         </div>
         <div className="col-12">
-          <label className="form-label">Estado de la Reserva</label>
-          <select name="estado" className="form-select" value={formData.estado} onChange={handleChange}>
-            <option value="pendiente">Pendiente</option>
-            <option value="confirmada">Confirmada</option>
-            <option value="cancelada">Cancelada</option>
-            <option value="finalizada">Finalizada</option>
+          <label htmlFor="editar-estado" className="form-label">Estado</label>
+          <select id="editar-estado" name="estado" className="form-select" value={form.estado} onChange={cambiar}>
+            {ESTADOS_RESERVA.map((e) => <option key={e} value={e}>{capitalizar(e)}</option>)}
           </select>
         </div>
       </div>
-      <div className="modal-footer mt-4 px-0">
+      {problema && <div className="alert alert-warning mt-3 mb-0" role="alert">{problema}</div>}
+      <div className="d-flex justify-content-end gap-2 mt-4">
         <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancelar</button>
-        <button type="submit" className="btn btn-primary">Guardar Cambios</button>
+        <button type="submit" className="btn btn-primary" disabled={Boolean(problema) || enviando}>{enviando ? 'Guardando…' : 'Guardar cambios'}</button>
       </div>
     </form>
   );

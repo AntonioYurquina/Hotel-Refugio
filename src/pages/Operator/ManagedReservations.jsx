@@ -1,57 +1,45 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import EstadoBadge from '../../components/ui/EstadoBadge';
+import { ESTADOS_RESERVA, etiquetaUsuario } from '../../utils/reservas';
+import { formatearFecha } from '../../utils/fechas';
 
-const getStatusBadge = (status) => {
-  switch (status) {
-    case 'confirmada': return 'bg-success';
-    case 'pendiente': return 'bg-warning text-dark';
-    case 'cancelada': return 'bg-danger';
-    default: return 'bg-secondary';
-  }
-};
+const MAXIMO = 8;
 
-export default function ManagedReservations({ reservations, onEdit }) {
-  const [statusFilter, setStatusFilter] = useState('todas'); // 'todas', 'confirmada', 'pendiente', etc.
+export default function ManagedReservations({ reservations, rooms, users, currentUser, onEdit }) {
+  const [filtro, setFiltro] = useState('todas');
 
-  const managedReservations = useMemo(() => {
-    const filtered = statusFilter === 'todas'
-      ? reservations
-      : reservations.filter(res => res.estado === statusFilter);
-    
-    return filtered.sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
-  }, [reservations, statusFilter]);
-
-  const filterOptions = ['todas', 'confirmada', 'pendiente', 'cancelada', 'finalizada'];
+  const ultimas = useMemo(
+    () =>
+      reservations
+        .filter((r) => filtro === 'todas' || r.estado === filtro)
+        .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
+        .slice(0, MAXIMO),
+    [reservations, filtro],
+  );
 
   return (
     <>
-      <div className="btn-group mb-3" role="group" aria-label="Filtro de estado de reservas">
-        {filterOptions.map(option => (
-          <button
-            key={option}
-            type="button"
-            className={`btn btn-sm text-capitalize ${statusFilter === option ? 'btn-primary' : 'btn-outline-secondary'}`}
-            onClick={() => setStatusFilter(option)}
-          >
-            {option}
+      <div className="btn-group btn-group-sm flex-wrap mb-3" role="group" aria-label="Filtrar reservas por estado">
+        {['todas', ...ESTADOS_RESERVA].map((opcion) => (
+          <button key={opcion} type="button" className={`btn text-capitalize ${filtro === opcion ? 'btn-primary' : 'btn-outline-secondary'}`} aria-pressed={filtro === opcion} onClick={() => setFiltro(opcion)}>
+            {opcion}
           </button>
         ))}
       </div>
 
-      {managedReservations.length === 0 ? (
-        <p className="text-muted">No hay reservas que coincidan con el filtro seleccionado.</p>
+      {ultimas.length === 0 ? (
+        <p className="text-muted mb-0">No hay reservas con ese estado.</p>
       ) : (
         <div className="list-group">
-          {managedReservations.map(res => (
-            <div key={res.id_reserva} className="list-group-item d-flex justify-content-between align-items-center">
+          {ultimas.map((r) => (
+            <div key={r.id_reserva} className="list-group-item d-flex justify-content-between align-items-center gap-2">
               <div>
-                <strong>Reserva #{res.id_reserva} (Hab. {res.id_habitacion})</strong>
-                <span className={`ms-2 badge ${getStatusBadge(res.estado)}`}>{res.estado}</span>
-                <small className="d-block text-muted">
-                  {new Date(res.fecha_inicio).toLocaleDateString()} - {new Date(res.fecha_fin).toLocaleDateString()}
-                </small>
+                <strong>#{r.id_reserva} · Hab. {rooms.find((h) => h.id_habitacion === r.id_habitacion)?.numero ?? r.id_habitacion}</strong>
+                <EstadoBadge estado={r.estado} className="ms-2" />
+                <small className="d-block text-muted">{etiquetaUsuario(users, r.id_usuario, currentUser)} · {formatearFecha(r.fecha_inicio)} – {formatearFecha(r.fecha_fin)}</small>
               </div>
-              <button className="btn btn-sm btn-outline-secondary" onClick={() => onEdit(res)}>
-                <i className="fa-solid fa-pencil me-1"></i> Editar
+              <button className="btn btn-sm btn-outline-secondary" onClick={() => onEdit(r)} aria-label={`Editar la reserva ${r.id_reserva}`}>
+                <i className="fa-solid fa-pencil" aria-hidden="true"></i>
               </button>
             </div>
           ))}

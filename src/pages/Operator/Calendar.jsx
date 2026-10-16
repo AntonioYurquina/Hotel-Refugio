@@ -6,12 +6,13 @@ import startOfWeek from 'date-fns/startOfWeek';
 import getDay from 'date-fns/getDay';
 import es from 'date-fns/locale/es';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { useTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/themeContext';
+import { aDateLocal } from '../../utils/fechas';
 
 const locales = { 'es': es };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
-export default function OperatorCalendar({ reservations, onSelectEvent, onSelectSlot }) {
+export default function OperatorCalendar({ reservations, rooms, onSelectEvent, onSelectSlot }) {
   const { theme } = useTheme();
   const [showArchived, setShowArchived] = useState(false);
 
@@ -23,13 +24,13 @@ export default function OperatorCalendar({ reservations, onSelectEvent, onSelect
       : reservations.filter(res => res.estado === 'confirmada' || res.estado === 'pendiente');
 
     return filteredReservations.map(res => ({
-      title: `Reserva #${res.id_reserva} - Hab: ${res.id_habitacion}`,
-      start: new Date(res.fecha_inicio),
-      end: new Date(res.fecha_fin),
+      title: `#${res.id_reserva} · Hab. ${rooms.find((h) => h.id_habitacion === res.id_habitacion)?.numero ?? res.id_habitacion}`,
+      start: aDateLocal(res.fecha_inicio),
+      end: aDateLocal(res.fecha_fin),
       allDay: true,
       resource: res,
     }));
-  }, [reservations, showArchived]);
+  }, [reservations, rooms, showArchived]);
 
   const eventStyleGetter = (event) => {
     const status = event.resource.estado;
@@ -72,6 +73,7 @@ export default function OperatorCalendar({ reservations, onSelectEvent, onSelect
           onSelectSlot={onSelectSlot}
           onSelectEvent={onSelectEvent}
           eventPropGetter={eventStyleGetter}
+          culture="es"
           messages={{
             next: "Siguiente",
             previous: "Anterior",

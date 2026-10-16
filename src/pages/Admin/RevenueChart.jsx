@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { useTheme } from '../../context/ThemeContext';
-import { differenceInDays } from 'date-fns';
+import { useTheme } from '../../context/themeContext';
+import { ingresoDe } from '../../utils/estadisticas';
+import { formatearPrecio } from '../../utils/formato';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -20,14 +21,7 @@ export default function RevenueChart({ reservations, rooms }) {
       yearSet.add(year);
 
       if (year === selectedYear && res.estado === 'finalizada') {
-        const room = rooms.find(r => r.id_habitacion === res.id_habitacion);
-        if (!room) return;
-
-        const nights = differenceInDays(new Date(res.fecha_fin), new Date(res.fecha_inicio));
-        const revenue = nights > 0 ? nights * parseFloat(room.precio_noche) : 0;
-        
-        const month = creationDate.getMonth();
-        monthlyRevenue[month] += revenue;
+        monthlyRevenue[creationDate.getMonth()] += ingresoDe(res, rooms);
       }
     });
 
@@ -48,9 +42,9 @@ export default function RevenueChart({ reservations, rooms }) {
     const options = {
       responsive: true,
       maintainAspectRatio: false, // Clave para controlar el tamaño
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => formatearPrecio(c.parsed.y) } } },
       scales: {
-        y: { ticks: { color: themeColors.text }, grid: { color: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' } },
+        y: { ticks: { color: themeColors.text, callback: (v) => formatearPrecio(v) }, grid: { color: theme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)' } },
         x: { ticks: { color: themeColors.text }, grid: { color: 'transparent' } }
       }
     };
@@ -67,6 +61,7 @@ export default function RevenueChart({ reservations, rooms }) {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h5 className="card-title mb-0">Ingresos Mensuales (Finalizadas)</h5>
         <select 
+          aria-label="Año"
           className="form-select form-select-sm w-auto" 
           value={selectedYear} 
           onChange={e => setSelectedYear(parseInt(e.target.value, 10))}

@@ -1,33 +1,30 @@
-import React, { createContext, useState, useEffect, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ThemeContext } from './themeContext';
 
-const ThemeContext = createContext();
+const leerTema = () => {
+  try {
+    return localStorage.getItem('theme') || 'light';
+  } catch {
+    return 'light';
+  }
+};
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    // Lee el tema guardado o usa 'light' por defecto
-    const savedTheme = localStorage.getItem('theme');
-    return savedTheme || 'light';
-  });
+  const [theme, setTheme] = useState(leerTema);
 
   useEffect(() => {
-    // Aplica el tema al elemento <html> y lo guarda en localStorage
     document.documentElement.setAttribute('data-bs-theme', theme);
-    localStorage.setItem('theme', theme);
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {
+      // Sin almacenamiento disponible: el tema dura hasta recargar.
+    }
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
-
-  // useMemo para evitar re-renders innecesarios
-  const value = useMemo(() => ({ theme, toggleTheme }), [theme]);
-
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo(
+    () => ({ theme, toggleTheme: () => setTheme((anterior) => (anterior === 'light' ? 'dark' : 'light')) }),
+    [theme],
   );
-}
 
-// Hook personalizado para usar el contexto del tema fácilmente
-export const useTheme = () => useContext(ThemeContext);
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+}
