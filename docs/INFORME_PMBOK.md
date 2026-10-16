@@ -24,8 +24,9 @@ Se entregó la **API Hotel v1** con su documentación. Este proyecto la integra 
 - Las 11 rutas del índice de la API están implementadas en un cliente propio, con control de concurrencia por versión y manejo del error `409`.
 - La demo y la API real son intercambiables con una sola variable de entorno (`VITE_API_URL`).
 - La interfaz se adapta a lo que la API permite en lugar de simular lo que no existe.
+- Se incorporó una integración externa nueva, el **pronóstico del clima de Salta** (Open-Meteo), y se documentaron todas las integraciones de terceros (sección 3.5).
 - Se detectaron y corrigieron **12 desvíos** entre el código previo y el contrato de la API (sección 4.1).
-- Verificación: **49 pruebas unitarias**, **4 pruebas de contrato contra la API real** (más 1 de escritura opcional), **22 verificaciones de navegador en modo demo** y **10 contra la API real**. Lint sin advertencias y compilación correcta.
+- Verificación: **53 pruebas unitarias**, **4 pruebas de contrato contra la API real** (más 1 de escritura opcional), **22 verificaciones de navegador en modo demo** y **10 contra la API real**. Lint sin advertencias y compilación correcta.
 
 **Qué debe saber quien evalúe:** la API v1 tiene limitaciones propias —sin autenticación por token, contraseñas sin cifrar, sin validación de solapamientos— que se documentan en la sección 5.3 y se mitigaron en el frontend solo hasta donde es posible.
 
@@ -83,7 +84,8 @@ Se entregó la **API Hotel v1** con su documentación. Este proyecto la integra 
 │   ├── 1.4.1 Componentes compartidos (modal, confirmación, insignias, pantallas)
 │   ├── 1.4.2 Sitio público y portal de reservas
 │   ├── 1.4.3 Panel de operador
-│   └── 1.4.4 Panel de gerencia
+│   ├── 1.4.4 Panel de gerencia
+│   └── 1.4.5 Integraciones externas (clima)
 ├── 1.5 Calidad
 │   ├── 1.5.1 Lint y pruebas unitarias
 │   ├── 1.5.2 Pruebas de contrato contra la API real
@@ -133,7 +135,7 @@ Ruta crítica: la **capa de datos** bloquea todas las interfaces, por eso se con
 | Medida | Meta | Resultado |
 |---|---|---|
 | Advertencias de lint | 0 | **0** |
-| Pruebas unitarias | Todas en verde | **49 / 49** |
+| Pruebas unitarias | Todas en verde | **53 / 53** |
 | Pruebas de contrato (API real) | Todas en verde | **5 / 5** (4 de lectura y 409 + 1 de escritura) |
 | Verificaciones de navegador, demo | 100 % | **22 / 22** |
 | Verificaciones de navegador, API real | 100 % | **10 / 10** |
@@ -157,6 +159,8 @@ Escala: probabilidad (P) e impacto (I) de 1 a 3; exposición = P × I.
 | RK7 | `POST /registrar` exige `tipo_usuario` y, según la documentación, acepta los tres roles sin autenticación | 2 | 3 | 6 | Los formularios públicos siempre envían `cliente`; **recomendación** al equipo de la API: aceptar solo `cliente` en el alta pública. No se probó en la API real para no crear usuarios | Abierto, a verificar |
 | RK8 | Probar escrituras contra una API compartida | 2 | 2 | 4 | **Evitar** salvo un único ciclo crear → modificar → eliminar en una fecha lejana (2031); el resto, respuestas 409 que no modifican datos | Controlado (ver 4.2) |
 | RK9 | Foto faltante para habitaciones nuevas (la API tiene 10 juegos de fotos) | 2 | 1 | 2 | **Mitigar**: imagen por defecto | Mitigado |
+| RK10 | Un servicio de terceros (clima, mapas, correo) deja de responder o cambia | 2 | 1 | 2 | **Mitigar**: ninguno es imprescindible para reservar; la sección del clima se oculta si falla y se guarda 30 minutos en el navegador para no repetir consultas. Probado con el servicio bloqueado | Mitigado |
+| RK11 | Claves públicas de EmailJS visibles en el código del navegador | 2 | 2 | 4 | **Aceptar** (EmailJS está pensado así) y **recomendar** restringir la cuenta a los dominios del sitio y limitar los envíos | Abierto, recomendación |
 
 ### 2.6 Gestión de las comunicaciones y de los interesados
 
@@ -253,6 +257,27 @@ Todo desvío del contrato se registró primero como hallazgo (sección 4.1) y se
 
 ---
 
+### 3.5 Integraciones externas
+
+Además de la API Hotel v1 (propia del proyecto), la aplicación usa servicios de terceros. Se relevaron en el código y se documentan para que sea claro qué datos salen del navegador y qué pasa si fallan.
+
+| Servicio | Dónde se usa | Para qué | Datos que se envían | Si falla |
+|---|---|---|---|---|
+| **Open-Meteo** (API REST, gratuita, sin clave) | Inicio, sección «El clima en Salta» | Temperatura, humedad, viento y pronóstico a 5 días | Solo las coordenadas del hotel | La sección se oculta; el resto sigue igual |
+| **Google Maps** (mapa embebido) | Inicio, «Encuéntranos» | Mostrar la ubicación del hotel | Lo que Google recibe de cualquier página con un mapa embebido | El recuadro del mapa queda vacío |
+| **Google Maps** (enlace de rutas) | Botón «Cómo llegar» | Abrir indicaciones hacia el hotel | Nada: es un enlace | No aplica |
+| **EmailJS** | Formulario de contacto y «Soporte» del operador | Enviar correos desde el navegador sin servidor propio | Asunto, mensaje y datos de quien escribe | Aviso de error en pantalla |
+| **Font Awesome** (CDN) | Toda la interfaz | Íconos | Nada propio del proyecto | Se pierden los íconos, no la función |
+| **pravatar.cc** | Testimonios | Fotos de perfil de ejemplo | Nada | Fotos faltantes |
+
+**Pronóstico del clima (nuevo en este proyecto).** El módulo `src/api/clima.js` consulta Open-Meteo, traduce los códigos de clima (estándar WMO) a texto e íconos en español, redondea los valores y guarda el resultado 30 minutos en `sessionStorage`. El componente `ClimaSalta` muestra el clima actual y cinco días de pronóstico, con aviso de la fuente. Cuatro pruebas unitarias cubren la traducción, la interpretación, el error del servicio y la reutilización del resultado guardado.
+
+**Código sin uso.** `ApiDemo.jsx` (ejemplos de Unsplash y GitHub) existe en el repositorio pero no está conectado a ninguna pantalla, así que esas dos APIs no se ejecutan. El `INFORME_TECNICO.md` original las menciona.
+
+**Relación con las otras interfaces:** el clima se muestra en el inicio, donde se decide el viaje; no interviene en reservas ni en los paneles.
+
+---
+
 ## 4. Grupo de procesos de Monitoreo y Control
 
 ### 4.1 Diagnóstico inicial: desvíos entre el código previo y la API
@@ -276,9 +301,10 @@ Todo desvío del contrato se registró primero como hallazgo (sección 4.1) y se
 
 | Nivel | Cantidad | Qué cubre |
 |---|---|---|
-| Unitarias | 49 en 6 archivos | Fechas (incluida otra zona horaria), solapamientos, validaciones, estadísticas, cliente de la API, servidor de demo |
+| Unitarias | 53 en 7 archivos | Fechas (incluida otra zona horaria), solapamientos, validaciones, estadísticas, cliente de la API, servidor de demo, clima |
 | Contrato contra la API real | 5 | Formato de las listas, error de login, `409` con versión vieja (sin modificar datos) y un ciclo de escritura opcional |
 | Navegador, modo demo | 22 | Recorrido de los tres roles, reserva, conflicto y reintento, solapamiento, alta de habitación y usuario, móvil, consola |
+| Navegador, clima | 2 | Sección del clima con datos reales y con el servicio bloqueado (se oculta y el resto sigue funcionando) |
 | Navegador, API real | 10 | Datos y fotos reales, error de login de la API, advertencia de contraseñas, buscador, modal sin sesión, consola |
 
 **Hallazgos durante las pruebas** (corregidos): un error de un día en `formatearFecha` (lo detectó una prueba unitaria), los avisos cubrían los botones de la cabecera del operador (se movieron), la torta de estados se recortaba y los botones usaban un azul distinto al de la marca.
@@ -352,6 +378,14 @@ El mensaje «Usuario no encontrado» es el texto que responde la API (`401`).
 
 El aviso de modo demo y el buscador se reacomodan sin desbordar la pantalla.
 
+**Figura 8. Pronóstico del clima de Salta (Open-Meteo)**
+
+![Clima de Salta](img/a6-clima.png)
+
+1. Clima actual: temperatura, estado del cielo, humedad y viento.
+2. Pronóstico de cinco días: máxima, mínima y probabilidad de lluvia.
+3. Atribución de la fuente de datos.
+
 ---
 
 ## 5. Grupo de procesos de Cierre
@@ -420,7 +454,7 @@ Tomados de la documentación de la API y del análisis; no se pueden resolver de
 ```bash
 npm install
 npm run lint        # 0 advertencias
-npm test            # 49 pruebas unitarias
+npm test            # 53 pruebas unitarias
 npm run build
 
 # Contra la API real (solo lectura y respuestas 409 que no modifican datos):

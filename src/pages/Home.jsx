@@ -3,6 +3,7 @@ import Hero from '../components/Hero';
 import RoomCarousel from '../components/RoomCarousel';
 import LocationMap from '../components/LocationMap';
 import Testimonials from '../components/Testimonials';
+import ClimaSalta from '../components/ClimaSalta';
 import { adaptarHabitacion } from '../utils/habitaciones';
 
 export default function Home({ habitaciones }) {
@@ -17,6 +18,8 @@ export default function Home({ habitaciones }) {
           <h2 className="text-center mb-4">Nuestras Habitaciones</h2>
           <RoomCarousel rooms={rooms} />
         </section>
+
+        <ClimaSalta />
 
         {/* Sección de Servicios */}
         <section className="mb-5 pt-4 border-top">

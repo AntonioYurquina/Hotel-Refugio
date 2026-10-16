@@ -54,6 +54,12 @@ src/pages/      sitio público, panel de operador y de gerencia
 
 La interfaz se adapta a las operaciones que existen: se pueden **crear habitaciones y cambiar su estado**, **crear, modificar y eliminar reservas**, **iniciar sesión** y **registrar usuarios**. No hay edición ni borrado de habitaciones o usuarios, ni listado de usuarios (`GET /usuarios` es una ruta de test que expone contraseñas y no se usa contra la API real). La API tampoco valida solapamientos de reservas ni el orden de las fechas: lo hace el frontend (`src/utils/reservas.js`).
 
+## Servicios externos
+
+- **Open-Meteo:** pronóstico del clima de Salta en el inicio (gratuito, sin clave; si falla, la sección se oculta).
+- **Google Maps:** mapa embebido y enlace «Cómo llegar».
+- **EmailJS:** formulario de contacto y soporte del operador.
+
 ## Tecnologías
 
 React 18, Vite, React Router, Bootstrap 5, Chart.js, React Big Calendar, date-fns y Vitest.
