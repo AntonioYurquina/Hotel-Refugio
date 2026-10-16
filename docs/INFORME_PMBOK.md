@@ -290,35 +290,67 @@ Todo desvío del contrato se registró primero como hallazgo (sección 4.1) y se
 - Se cumplió el alcance acordado. No se modificó el servidor de la API.
 - **Cambio de alcance justificado:** se eliminaron funciones que la API no soporta (edición de habitaciones, edición y baja de usuarios), porque mantenerlas como simulación contradice el objetivo 3.
 
-### 4.4 Capturas
+### 4.4 Capturas anotadas
 
-**Sitio público con datos de la API real** (precios en pesos, fotos reales)
+Cada captura tiene marcadores numerados en rosa; la leyenda indica qué señala cada número.
 
-![Inicio con la API real](img/real-01-home.png)
+**Figura 1. Sitio público con datos de la API real**
 
-**Modo demo: la solicitud de reserva y el aviso de conflicto (409)**
+![Inicio con la API real](img/a1-inicio-api-real.png)
 
-![Conflicto 409](img/06-conflicto-409.png)
+1. Foto real de la habitación, servida por la ruta de imágenes de la API (si falta, se muestra una imagen por defecto).
+2. Precio por noche: la API lo entrega como texto (`"1500.00"`) y la aplicación lo convierte y lo muestra en pesos.
+3. Indicador del pie: confirma que los datos vienen de la API real y no de la demo.
 
-**Panel de operador**
+**Figura 2. Conflicto de versión (409) al solicitar una reserva**
 
-![Panel de operador](img/07-operador.png)
+![Conflicto 409](img/a2-conflicto-409.png)
 
-**Detección de solapamiento al crear una reserva**
+1. Total estimado calculado en el cliente (noches × precio).
+2. Aviso de conflicto: otra persona modificó la tabla, la aplicación volvió a leer los datos y pide revisar y reintentar.
+3. Al volver a pulsar, la solicitud se envía con la versión nueva y se acepta.
 
-![Solapamiento](img/08-operador-solapamiento.png)
+**Figura 3. Panel de operador**
 
-**Panel de gerencia**
+![Panel de operador](img/a3-operador.png)
 
-![Panel de gerencia](img/09-admin.png)
+1. Indicadores del día: ocupación, disponibles, llegadas, salidas y pendientes.
+2. Calendario de reservas; seleccionar un rango abre el alta con las fechas cargadas.
+3. Rack de 30 días por habitación; cada barra es una reserva y abre su detalle.
+4. Mapa de habitaciones con cambio de estado (`PUT /habitaciones/:id`).
+5. Gestor de reservas con búsqueda, nombres de cliente y cambio de estado.
+6. Alta de reservas.
 
-**Error de acceso devuelto por la API real**
+**Figura 4. Detección de solapamiento antes de enviar**
+
+![Solapamiento](img/a4-solapamiento.png)
+
+1. Cliente: en demo es un selector; con la API real se pide el número de cliente, porque no hay listado de usuarios.
+2. Fechas elegidas.
+3. Aviso: la habitación ya está reservada; la API no lo valida, por eso lo hace el cliente.
+4. El botón de crear queda deshabilitado mientras haya conflicto.
+
+**Figura 5. Panel de gerencia**
+
+![Panel de gerencia](img/a5-gerencia.png)
+
+1. Indicadores: ingresos de reservas finalizadas, ocupación, estadía promedio e ingreso por reserva.
+2. Ingresos mensuales en pesos.
+3. Estado de las habitaciones.
+4. Pestañas de habitaciones, usuarios y reservas.
+5. Selector de estado por habitación (lo único que la API v1 permite modificar).
+
+**Figura 6. Error de acceso devuelto por la API real**
 
 ![Login con error](img/real-02-login-error.png)
 
-**Versión móvil**
+El mensaje «Usuario no encontrado» es el texto que responde la API (`401`).
+
+**Figura 7. Versión móvil**
 
 ![Móvil](img/12-movil.png)
+
+El aviso de modo demo y el buscador se reacomodan sin desbordar la pantalla.
 
 ---
 
